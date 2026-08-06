@@ -33,100 +33,322 @@ const messages = computed(() => {
     }) || []
   );
 });
+
+// ── copy hash ─────────────────────────────────────────────────────────────────
+const copied = ref(false);
+function copyHash() {
+  const h = tx.value.tx_response?.txhash;
+  if (!h) return;
+  navigator.clipboard.writeText(h).then(() => {
+    copied.value = true;
+    setTimeout(() => { copied.value = false; }, 2000);
+  }).catch(() => {});
+}
+
+// ── coin formatting ────────────────────────────────────────────────────────────
+function fmtCoins(coins: any): string {
+  if (!coins) return '—';
+  const arr = Array.isArray(coins) ? coins : [coins];
+  return arr.map((c: any) => {
+    if (!c || !c.denom) return '';
+    const denom: string = c.denom;
+    const amount: string = c.amount || '0';
+    if (denom === 'minf') {
+      const n = BigInt(amount);
+      const whole = n / 1_000_000n;
+      const frac  = n % 1_000_000n;
+      return frac > 0n
+        ? `${whole.toLocaleString()}.${frac.toString().padStart(6, '0').replace(/0+$/, '')} INF`
+        : `${whole.toLocaleString()} INF`;
+    }
+    return `${Number(amount).toLocaleString()} ${denom.toUpperCase()}`;
+  }).filter(Boolean).join(' + ');
+}
+
+// ── message metadata for known Cosmos message types ───────────────────────────
+interface MsgRow { key: string; val: string; isAddr?: boolean }
+interface MsgDisplay { icon: string; label: string; rows: MsgRow[]; raw?: any }
+
+function msgMeta(msg: any): MsgDisplay {
+  const type: string = msg['@type'] || '';
+  const label = type.split('.').pop()?.replace(/^Msg/, '') ?? 'Unknown';
+
+  if (type.endsWith('MsgSend')) return { icon: '↑', label: 'Send', rows: [
+    { key: 'From',   val: msg.from_address ?? '', isAddr: true },
+    { key: 'To',     val: msg.to_address   ?? '', isAddr: true },
+    { key: 'Amount', val: fmtCoins(msg.amount) },
+  ]};
+  if (type.endsWith('MsgDelegate')) return { icon: '⤵', label: 'Delegate', rows: [
+    { key: 'Delegator', val: msg.delegator_address ?? '', isAddr: true },
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+    { key: 'Amount',    val: fmtCoins(msg.amount ? [msg.amount] : []) },
+  ]};
+  if (type.endsWith('MsgUndelegate')) return { icon: '⤴', label: 'Undelegate', rows: [
+    { key: 'Delegator', val: msg.delegator_address ?? '', isAddr: true },
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+    { key: 'Amount',    val: fmtCoins(msg.amount ? [msg.amount] : []) },
+  ]};
+  if (type.endsWith('MsgBeginRedelegate')) return { icon: '↔', label: 'Redelegate', rows: [
+    { key: 'Delegator',      val: msg.delegator_address     ?? '', isAddr: true },
+    { key: 'From Validator', val: msg.validator_src_address ?? '', isAddr: true },
+    { key: 'To Validator',   val: msg.validator_dst_address ?? '', isAddr: true },
+    { key: 'Amount',         val: fmtCoins(msg.amount ? [msg.amount] : []) },
+  ]};
+  if (type.endsWith('MsgWithdrawDelegatorReward')) return { icon: '↓', label: 'Claim Rewards', rows: [
+    { key: 'Delegator', val: msg.delegator_address ?? '', isAddr: true },
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+  ]};
+  if (type.endsWith('MsgVote') || type.endsWith('MsgVoteWeighted')) return { icon: '✓', label: 'Vote', rows: [
+    { key: 'Voter',    val: msg.voter ?? '', isAddr: true },
+    { key: 'Proposal', val: `#${msg.proposal_id}` },
+    { key: 'Option',   val: msg.option ?? '' },
+  ]};
+  if (type.endsWith('MsgCreateValidator')) return { icon: '⬡', label: 'Create Validator', rows: [
+    { key: 'Moniker',   val: msg.description?.moniker ?? '' },
+    { key: 'Delegator', val: msg.delegator_address ?? '', isAddr: true },
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+    { key: 'Value',     val: fmtCoins(msg.value ? [msg.value] : []) },
+  ]};
+  if (type.endsWith('MsgEditValidator')) return { icon: '✎', label: 'Edit Validator', rows: [
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+    { key: 'Moniker',   val: msg.description?.moniker ?? '' },
+  ]};
+  if (type.endsWith('MsgWithdrawValidatorCommission')) return { icon: '↓', label: 'Withdraw Commission', rows: [
+    { key: 'Validator', val: msg.validator_address ?? '', isAddr: true },
+  ]};
+
+  // Unknown — fall through to DynamicComponent
+  return { icon: '◆', label, rows: [], raw: msg };
+}
 </script>
+
 <template>
-  <div>
-    <div class="tabs tabs-boxed bg-transparent mb-4">
-      <RouterLink class="tab text-gray-400 uppercase" :to="`/${chain}/tx/?tab=recent`">{{
-        $t('block.recent')
-      }}</RouterLink>
-      <RouterLink class="tab text-gray-400 uppercase" :to="`/${chain}/tx/?tab=search`">Search</RouterLink>
-      <a class="tab text-gray-400 uppercase tab-active">Transaction</a>
+  <div class="inf-detail">
+
+    <!-- ── Loading ──────────────────────────────────────────────────────────── -->
+    <div v-if="!tx.tx_response"
+      style="display:flex;align-items:center;justify-content:center;padding:80px;color:#555;font-size:14px;">
+      Loading transaction…
     </div>
 
-    <div v-if="tx.tx_response" class="bg-base-100 px-4 pt-3 pb-4 rounded shadow mb-4">
-      <h2 class="card-title truncate mb-2">{{ $t('tx.title') }}</h2>
-      <div class="overflow-hidden">
-        <table class="table text-sm">
+    <div v-else>
+
+      <!-- ── Status + hash header ─────────────────────────────────────────────── -->
+      <div class="inf-card" style="margin-bottom:16px;">
+        <!-- Status pill -->
+        <div style="margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <span :style="`
+            display:inline-flex;align-items:center;gap:7px;
+            padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
+            background:${tx.tx_response.code === 0 ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)'};
+            border:1px solid ${tx.tx_response.code === 0 ? 'rgba(74,222,128,0.35)' : 'rgba(248,113,113,0.35)'};
+            color:${tx.tx_response.code === 0 ? '#4ade80' : '#f87171'};
+          `">
+            <span :style="`width:7px;height:7px;border-radius:50%;background:${tx.tx_response.code === 0 ? '#4ade80' : '#f87171'};display:inline-block;`"></span>
+            {{ tx.tx_response.code === 0 ? 'Success' : 'Failed' }}
+          </span>
+          <span v-if="tx.tx_response.code !== 0"
+            style="font-size:12px;color:#f87171;font-family:'SF Mono',monospace;word-break:break-all;">
+            {{ tx.tx_response.raw_log }}
+          </span>
+        </div>
+        <!-- Hash + copy -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0;">Tx Hash</span>
+          <span style="font-family:'SF Mono',monospace;font-size:13px;color:#d0d0d0;word-break:break-all;flex:1;">
+            {{ tx.tx_response.txhash }}
+          </span>
+          <button @click="copyHash()"
+            style="background:none;border:none;cursor:pointer;padding:3px;color:#555;display:flex;align-items:center;flex-shrink:0;"
+            :title="copied ? 'Copied!' : 'Copy hash'">
+            <span v-if="copied" style="font-size:13px;color:#4ade80;">✓</span>
+            <svg v-else width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Details table ─────────────────────────────────────────────────────── -->
+      <div class="inf-card" style="padding:0;margin-bottom:16px;overflow:hidden;">
+        <table class="inf-table">
           <tbody>
             <tr>
-              <td>{{ $t('tx.tx_hash') }}</td>
-              <td class="overflow-hidden">{{ tx.tx_response.txhash }}</td>
-            </tr>
-            <tr>
-              <td>{{ $t('account.height') }}</td>
+              <td class="label-cell">Height</td>
               <td>
-                <RouterLink :to="`/${props.chain}/block/${tx.tx_response.height}`" class="text-primary dark:invert"
-                  >{{ tx.tx_response.height }}
+                <RouterLink :to="`/${props.chain}/block/${tx.tx_response.height}`" class="inf-link"
+                  style="font-family:'SF Mono',monospace;">
+                  #{{ Number(tx.tx_response.height).toLocaleString() }}
                 </RouterLink>
               </td>
             </tr>
             <tr>
-              <td>{{ $t('staking.status') }}</td>
-              <td>
-                <span
-                  class="text-xs truncate relative py-2 px-4 w-fit mr-2 rounded"
-                  :class="`text-${tx.tx_response.code === 0 ? 'success' : 'error'}`"
-                >
-                  <span
-                    class="inset-x-0 inset-y-0 opacity-10 absolute"
-                    :class="`bg-${tx.tx_response.code === 0 ? 'success' : 'error'}`"
-                  ></span>
-                  {{ tx.tx_response.code === 0 ? 'Success' : 'Failed' }}
-                </span>
-                <span>
-                  {{ tx.tx_response.code === 0 ? '' : tx?.tx_response?.raw_log }}
+              <td class="label-cell">Timestamp</td>
+              <td style="color:#d0d0d0;">
+                {{ format.toLocaleDate(tx.tx_response.timestamp) }}
+                <span style="color:#555;margin-left:8px;font-size:12px;">
+                  ({{ format.toDay(tx.tx_response.timestamp, 'from') }})
                 </span>
               </td>
             </tr>
             <tr>
-              <td>{{ $t('account.time') }}</td>
-              <td>
-                {{ format.toLocaleDate(tx.tx_response.timestamp) }} ({{
-                  format.toDay(tx.tx_response.timestamp, 'from')
-                }})
+              <td class="label-cell">Fee</td>
+              <td style="font-family:'SF Mono',monospace;color:#d0d0d0;">
+                {{ format.formatTokens(tx.tx?.auth_info?.fee?.amount, true, '0,0.[00]') || '—' }}
               </td>
             </tr>
             <tr>
-              <td>{{ $t('tx.gas') }}</td>
-              <td>{{ tx.tx_response.gas_used }} / {{ tx.tx_response.gas_wanted }}</td>
-            </tr>
-            <tr>
-              <td>{{ $t('tx.fee') }}</td>
-              <td>
-                {{ format.formatTokens(tx.tx?.auth_info?.fee?.amount, true, '0,0.[00]') }}
+              <td class="label-cell">Gas Used / Wanted</td>
+              <td style="font-family:'SF Mono',monospace;color:#888;">
+                {{ Number(tx.tx_response.gas_used).toLocaleString() }}
+                /
+                {{ Number(tx.tx_response.gas_wanted).toLocaleString() }}
+                <span v-if="Number(tx.tx_response.gas_wanted) > 0"
+                  style="margin-left:8px;font-size:12px;color:#555;">
+                  ({{ ((Number(tx.tx_response.gas_used) / Number(tx.tx_response.gas_wanted)) * 100).toFixed(1) }}%)
+                </span>
               </td>
             </tr>
-            <tr>
-              <td>{{ $t('tx.memo') }}</td>
-              <td>{{ tx.tx.body.memo }}</td>
+            <tr v-if="tx.tx?.body?.memo">
+              <td class="label-cell">Memo</td>
+              <td style="color:#888;font-size:13px;">{{ tx.tx.body.memo }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div v-if="tx.tx_response" class="bg-base-100 px-4 pt-3 pb-4 rounded shadow mb-4">
-      <h2 class="card-title truncate mb-2">{{ $t('account.messages') }}: ({{ messages.length }})</h2>
-      <div v-for="(msg, i) in messages">
-        <div class="border border-slate-400 rounded-md mt-4">
-          <DynamicComponent :value="msg" />
+      <!-- ── Messages ──────────────────────────────────────────────────────────── -->
+      <div class="inf-card" style="margin-bottom:16px;">
+        <h3 class="inf-section-title" style="margin-bottom:16px;">
+          Messages
+          <span style="font-weight:400;color:#444;margin-left:8px;">({{ messages.length }})</span>
+        </h3>
+
+        <div v-if="!messages.length" style="color:#444;font-size:13px;text-align:center;padding:20px 0;">
+          No messages
+        </div>
+
+        <div v-for="(msg, i) in messages" :key="i" style="margin-bottom:10px;">
+
+          <!-- Known message type: structured table -->
+          <div v-if="msgMeta(msg).rows.length > 0" class="msg-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
+              <span style="font-size:15px;font-weight:600;color:#f0f0f0;">{{ msgMeta(msg).label }}</span>
+              <span style="font-size:11px;color:#444;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                {{ msg['@type'] }}
+              </span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+              <tbody>
+                <tr v-for="row in msgMeta(msg).rows" :key="row.key">
+                  <td style="padding:7px 0;font-size:12px;color:#555;width:140px;vertical-align:middle;white-space:nowrap;">
+                    {{ row.key }}
+                  </td>
+                  <td style="padding:7px 0 7px 8px;font-size:13px;vertical-align:middle;word-break:break-all;">
+                    <RouterLink v-if="row.isAddr && row.val"
+                      :to="`/${props.chain}/account/${row.val}`"
+                      class="inf-link"
+                      style="font-family:'SF Mono',monospace;">
+                      {{ row.val }}
+                    </RouterLink>
+                    <span v-else style="font-family:'SF Mono',monospace;color:#d0d0d0;">
+                      {{ row.val || '—' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Unknown/fallback: DynamicComponent -->
+          <div v-else class="msg-card msg-raw">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
+              <span style="font-size:15px;font-weight:600;color:#f0f0f0;">{{ msgMeta(msg).label }}</span>
+              <span style="font-size:11px;color:#444;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                {{ msg['@type'] }}
+              </span>
+            </div>
+            <DynamicComponent :value="msg" />
+          </div>
+
         </div>
       </div>
-      <div v-if="messages.length === 0">{{ $t('tx.no_messages') }}</div>
-    </div>
 
-    <div v-if="tx.tx_response" class="bg-base-100 px-4 pt-3 pb-4 rounded shadow">
-      <h2 class="card-title truncate mb-2">JSON</h2>
-      <JsonViewer
-        :value="tx"
-        :theme="baseStore.theme"
-        style="background: transparent"
-        copyable
-        boxed
-        sort
-        expand-depth="5"
-      />
+      <!-- ── Raw JSON ──────────────────────────────────────────────────────────── -->
+      <div class="inf-card">
+        <h3 class="inf-section-title" style="margin-bottom:14px;">Raw JSON</h3>
+        <JsonViewer
+          :value="tx"
+          :theme="baseStore.theme"
+          style="background:transparent"
+          copyable
+          boxed
+          sort
+          expand-depth="5"
+        />
+      </div>
+
     </div>
   </div>
 </template>
+
+<style scoped>
+.inf-detail {
+  color: #f0f0f0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.inf-card {
+  background: #141414;
+  border: 1px solid #2d2d2d;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.inf-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.inf-table td {
+  padding: 11px 20px;
+  font-size: 13px;
+  border-bottom: 1px solid #1a1a1a;
+  vertical-align: middle;
+}
+.inf-table tr:last-child td { border-bottom: none; }
+.inf-table tr:nth-child(even) td { background: rgba(0,0,0,0.18); }
+.label-cell {
+  width: 180px !important;
+  font-size: 12px !important;
+  color: #555 !important;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.inf-section-title {
+  font-size: 12px; font-weight: 600; color: #666;
+  text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
+}
+
+.inf-link {
+  color: #e8a500;
+  text-decoration: none;
+}
+.inf-link:hover { text-decoration: underline; }
+
+.msg-card {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 16px 20px;
+}
+.msg-raw :deep(.grid) { color: #888; }
+.msg-raw :deep(.font-semibold) { color: #555; font-size: 12px; }
+.msg-raw :deep(a) { color: #e8a500 !important; }
+.msg-raw :deep(.text-primary) { color: #e8a500 !important; }
+.msg-raw :deep(.dark\:invert) { filter: none !important; }
+</style>
