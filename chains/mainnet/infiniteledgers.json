@@ -1,0 +1,29 @@
+{
+  "chain_name": "infiniteledgers",
+  "chain_id": "infiniteledgers-1",
+  "registry_name": "infiniteledgers",
+  "network_type": "mainnet",
+  "api": [
+    { "provider": "Cloudflare", "address": "https://api.infiniteledgers.com" },
+    { "provider": "local", "address": "http://localhost:1317" }
+  ],
+  "rpc": [
+    { "provider": "Cloudflare", "address": "https://rpc.infiniteledgers.com" },
+    { "provider": "local", "address": "http://localhost:26657" }
+  ],
+  "sdk_version": "0.53",
+  "coin_type": "118",
+  "min_tx_fee": "2000",
+  "addr_prefix": "inf",
+  "logo": "/logos/infiniteledgers.svg",
+  "theme_color": "#000000",
+  "assets": [
+    {
+      "base": "minf",
+      "symbol": "INF",
+      "exponent": "6",
+      "coingecko_id": "",
+      "logo": "/logos/infiniteledgers.svg"
+    }
+  ]
+}
