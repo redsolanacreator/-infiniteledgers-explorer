@@ -13,6 +13,17 @@ const props = defineProps(['hash', 'chain']);
 const blockchain = useBlockchain();
 const baseStore = useBaseStore();
 const format = useFormatter();
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+const isLight = computed(() => baseStore.theme === 'light')
+const t0      = computed(() => isLight.value ? '#111111' : '#f0f0f0')
+const t1      = computed(() => isLight.value ? '#444444' : '#d0d0d0')
+const cardBg  = computed(() => isLight.value ? '#ffffff' : '#141414')
+const cardBd  = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
+const msgBg   = computed(() => isLight.value ? '#f8f8f8' : '#111111')
+const msgBd   = computed(() => isLight.value ? '#e8e8e8' : '#222222')
+const rowAlt  = computed(() => isLight.value ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.18)')
+const rowBd   = computed(() => isLight.value ? '#f0f0f0' : '#1a1a1a')
 const tx = ref(
   {} as {
     tx: Tx;
@@ -123,7 +134,7 @@ function msgMeta(msg: any): MsgDisplay {
 </script>
 
 <template>
-  <div class="inf-detail">
+  <div class="inf-detail" :class="{ 'inf-light': isLight }">
 
     <!-- ── Loading ──────────────────────────────────────────────────────────── -->
     <div v-if="!tx.tx_response"
@@ -155,7 +166,7 @@ function msgMeta(msg: any): MsgDisplay {
         <!-- Hash + copy -->
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0;">Tx Hash</span>
-          <span style="font-family:'SF Mono',monospace;font-size:13px;color:#d0d0d0;word-break:break-all;flex:1;">
+          <span :style="{ fontFamily: '\'SF Mono\',monospace', fontSize: '13px', color: t1, wordBreak: 'break-all', flex: '1' }">
             {{ tx.tx_response.txhash }}
           </span>
           <button @click="copyHash()"
@@ -185,7 +196,7 @@ function msgMeta(msg: any): MsgDisplay {
             </tr>
             <tr>
               <td class="label-cell">Timestamp</td>
-              <td style="color:#d0d0d0;">
+              <td :style="{ color: t1 }">
                 {{ format.toLocaleDate(tx.tx_response.timestamp) }}
                 <span style="color:#555;margin-left:8px;font-size:12px;">
                   ({{ format.toDay(tx.tx_response.timestamp, 'from') }})
@@ -194,7 +205,7 @@ function msgMeta(msg: any): MsgDisplay {
             </tr>
             <tr>
               <td class="label-cell">Fee</td>
-              <td style="font-family:'SF Mono',monospace;color:#d0d0d0;">
+              <td :style="{ fontFamily: '\'SF Mono\',monospace', color: t1 }">
                 {{ format.formatTokens(tx.tx?.auth_info?.fee?.amount, true, '0,0.[00]') || '—' }}
               </td>
             </tr>
@@ -235,15 +246,15 @@ function msgMeta(msg: any): MsgDisplay {
           <div v-if="msgMeta(msg).rows.length > 0" class="msg-card">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
               <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
-              <span style="font-size:15px;font-weight:600;color:#f0f0f0;">{{ msgMeta(msg).label }}</span>
-              <span style="font-size:11px;color:#444;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <span :style="{ fontSize: '15px', fontWeight: '600', color: t0 }">{{ msgMeta(msg).label }}</span>
+              <span style="font-size:11px;color:#888;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 {{ msg['@type'] }}
               </span>
             </div>
             <table style="width:100%;border-collapse:collapse;">
               <tbody>
                 <tr v-for="row in msgMeta(msg).rows" :key="row.key">
-                  <td style="padding:7px 0;font-size:12px;color:#555;width:140px;vertical-align:middle;white-space:nowrap;">
+                  <td style="padding:7px 0;font-size:12px;color:#888;width:140px;vertical-align:middle;white-space:nowrap;">
                     {{ row.key }}
                   </td>
                   <td style="padding:7px 0 7px 8px;font-size:13px;vertical-align:middle;word-break:break-all;">
@@ -253,7 +264,7 @@ function msgMeta(msg: any): MsgDisplay {
                       style="font-family:'SF Mono',monospace;">
                       {{ row.val }}
                     </RouterLink>
-                    <span v-else style="font-family:'SF Mono',monospace;color:#d0d0d0;">
+                    <span v-else :style="{ fontFamily: '\'SF Mono\',monospace', color: t1 }">
                       {{ row.val || '—' }}
                     </span>
                   </td>
@@ -266,8 +277,8 @@ function msgMeta(msg: any): MsgDisplay {
           <div v-else class="msg-card msg-raw">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
               <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
-              <span style="font-size:15px;font-weight:600;color:#f0f0f0;">{{ msgMeta(msg).label }}</span>
-              <span style="font-size:11px;color:#444;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <span :style="{ fontSize: '15px', fontWeight: '600', color: t0 }">{{ msgMeta(msg).label }}</span>
+              <span style="font-size:11px;color:#888;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 {{ msg['@type'] }}
               </span>
             </div>
@@ -297,13 +308,13 @@ function msgMeta(msg: any): MsgDisplay {
 
 <style scoped>
 .inf-detail {
-  color: #f0f0f0;
+  color: v-bind(t0);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 .inf-card {
-  background: #141414;
-  border: 1px solid #2d2d2d;
+  background: v-bind(cardBg);
+  border: 1px solid v-bind(cardBd);
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 16px;
@@ -316,21 +327,21 @@ function msgMeta(msg: any): MsgDisplay {
 .inf-table td {
   padding: 11px 20px;
   font-size: 13px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid v-bind(rowBd);
   vertical-align: middle;
 }
 .inf-table tr:last-child td { border-bottom: none; }
-.inf-table tr:nth-child(even) td { background: rgba(0,0,0,0.18); }
+.inf-table tr:nth-child(even) td { background: v-bind(rowAlt); }
 .label-cell {
   width: 180px !important;
   font-size: 12px !important;
-  color: #555 !important;
+  color: #888 !important;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .inf-section-title {
-  font-size: 12px; font-weight: 600; color: #666;
+  font-size: 12px; font-weight: 600; color: #888;
   text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
 }
 
@@ -341,13 +352,13 @@ function msgMeta(msg: any): MsgDisplay {
 .inf-link:hover { text-decoration: underline; }
 
 .msg-card {
-  background: #111;
-  border: 1px solid #222;
+  background: v-bind(msgBg);
+  border: 1px solid v-bind(msgBd);
   border-radius: 6px;
   padding: 16px 20px;
 }
 .msg-raw :deep(.grid) { color: #888; }
-.msg-raw :deep(.font-semibold) { color: #555; font-size: 12px; }
+.msg-raw :deep(.font-semibold) { color: #888; font-size: 12px; }
 .msg-raw :deep(a) { color: #e8a500 !important; }
 .msg-raw :deep(.text-primary) { color: #e8a500 !important; }
 .msg-raw :deep(.dark\:invert) { filter: none !important; }

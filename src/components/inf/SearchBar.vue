@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useBaseStore } from '@/stores'
 
-const props = defineProps<{ chain: string }>()
-const router = useRouter()
-const query = ref('')
+const props   = defineProps<{ chain: string }>()
+const router  = useRouter()
+const base    = useBaseStore()
+const query   = ref('')
 const focused = ref(false)
+
+const isLight = computed(() => base.theme === 'light')
+const bg      = computed(() => isLight.value ? '#ffffff' : '#1a1a1a')
+const bdColor = computed(() => focused.value ? '#e8a500' : (isLight.value ? '#d0d0d0' : '#2d2d2d'))
+const txtColor = computed(() => isLight.value ? '#111111' : '#f0f0f0')
 
 function handleSearch() {
   const q = query.value.trim()
@@ -24,35 +31,17 @@ function handleSearch() {
 </script>
 
 <template>
-  <form @submit.prevent="handleSearch" style="position:relative;width:100%;">
+  <form @submit.prevent="handleSearch" class="sb-wrap">
     <input
       v-model="query"
       type="text"
       placeholder="Search block height, tx hash, or address..."
+      class="sb-input"
+      :style="{ background: bg, borderColor: bdColor, color: txtColor }"
       @focus="focused = true"
       @blur="focused = false"
-      :style="`
-        width: 100%;
-        background: #1a1a1a;
-        border: 1px solid ${focused ? '#e8a500' : '#2d2d2d'};
-        border-radius: 8px;
-        padding: 10px 44px 10px 16px;
-        font-size: 14px;
-        color: #f0f0f0;
-        outline: none;
-        box-sizing: border-box;
-        font-family: 'SF Mono', 'Fira Code', monospace;
-        transition: border-color 0.15s;
-      `"
     />
-    <button
-      type="submit"
-      style="
-        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-        background: none; border: none; cursor: pointer; color: #888;
-        padding: 0; display: flex; align-items: center;
-      "
-    >
+    <button type="submit" class="sb-btn">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"/>
         <path d="m21 21-4.35-4.35"/>
@@ -60,3 +49,24 @@ function handleSearch() {
     </button>
   </form>
 </template>
+
+<style scoped>
+.sb-wrap { position: relative; width: 100%; }
+.sb-input {
+  width: 100%;
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 10px 44px 10px 16px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sb-input::placeholder { color: #888; }
+.sb-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: #888;
+  padding: 0; display: flex; align-items: center;
+}
+</style>

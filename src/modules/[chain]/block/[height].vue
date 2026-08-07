@@ -12,6 +12,17 @@ const props = defineProps(['height', 'chain']);
 
 const store = useBaseStore();
 const format = useFormatter();
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+const isLight  = computed(() => store.theme === 'light')
+const t0       = computed(() => isLight.value ? '#111111' : '#f0f0f0')
+const t1       = computed(() => isLight.value ? '#444444' : '#d0d0d0')
+const cardBg   = computed(() => isLight.value ? '#ffffff' : '#141414')
+const cardBd   = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
+const inputBg  = computed(() => isLight.value ? '#f5f5f5' : '#1a1a1a')
+const inputBd  = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
+const rowAlt   = computed(() => isLight.value ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.18)')
+const rowBd    = computed(() => isLight.value ? '#f0f0f0' : '#1a1a1a')
 const current = ref({} as Block);
 const target = ref(Number(props.height || 0));
 const loading = ref(true);
@@ -79,7 +90,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
 </script>
 
 <template>
-  <div class="inf-detail">
+  <div class="inf-detail" :class="{ 'inf-light': isLight }">
 
     <!-- ── Loading ──────────────────────────────────────────────────────── -->
     <div v-if="loading" style="display:flex;align-items:center;justify-content:center;padding:80px;color:#555;font-size:14px;">
@@ -97,7 +108,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
           <Countdown :time="estimateTime" css="md:!text-5xl font-sans md:mx-5" />
           <div style="font-size:13px;color:#888;margin-top:20px;">
             Estimated arrival:
-            <span style="color:#f0f0f0;font-weight:600;margin-left:6px;">{{ format.toLocaleDate(estimateDate) }}</span>
+            <span :style="{ color: t0, fontWeight: '600', marginLeft: '6px' }">{{ format.toLocaleDate(estimateDate) }}</span>
           </div>
         </div>
 
@@ -113,7 +124,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
                   <div style="display:flex;gap:8px;justify-content:center;">
                     <input
                       v-model="newHeight" type="number"
-                      style="background:#1a1a1a;border:1px solid #2d2d2d;border-radius:6px;padding:8px 12px;color:#f0f0f0;font-size:13px;outline:none;width:160px;"
+                      :style="{ background: inputBg, border: `1px solid ${inputBd}`, borderRadius: '6px', padding: '8px 12px', color: t0, fontSize: '13px', outline: 'none', width: '160px' }"
                     />
                     <button @click="updateTarget()"
                       style="background:#e8a500;color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
@@ -124,15 +135,15 @@ onBeforeRouteUpdate(async (to, from, next) => {
               </tr>
               <tr>
                 <td class="label-cell">Current Height</td>
-                <td style="font-family:monospace;color:#f0f0f0;">#{{ store.latest?.block?.header.height }}</td>
+                <td :style="{ fontFamily: 'monospace', color: t0 }">#{{ store.latest?.block?.header.height }}</td>
               </tr>
               <tr>
                 <td class="label-cell">Blocks Remaining</td>
-                <td style="font-family:monospace;color:#f0f0f0;">{{ remainingBlocks.toLocaleString() }}</td>
+                <td :style="{ fontFamily: 'monospace', color: t0 }">{{ remainingBlocks.toLocaleString() }}</td>
               </tr>
               <tr>
                 <td class="label-cell">Avg Block Time</td>
-                <td style="font-family:monospace;color:#f0f0f0;">{{ (store.blocktime / 1000).toFixed(1) }}s</td>
+                <td :style="{ fontFamily: 'monospace', color: t0 }">{{ (store.blocktime / 1000).toFixed(1) }}s</td>
               </tr>
             </tbody>
           </table>
@@ -162,7 +173,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
             >→</RouterLink>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:13px;color:#d0d0d0;">{{ format.toLocaleDate(current.block?.header?.time) }}</div>
+            <div :style="{ fontSize: '13px', color: t1 }">{{ format.toLocaleDate(current.block?.header?.time) }}</div>
             <div style="font-size:12px;color:#555;margin-top:3px;">{{ format.toDay(current.block?.header?.time, 'from') }}</div>
           </div>
         </div>
@@ -180,7 +191,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
           <tbody>
             <tr>
               <td class="label-cell">Chain ID</td>
-              <td style="font-family:'SF Mono',monospace;color:#f0f0f0;">{{ current.block?.header?.chain_id }}</td>
+              <td :style="{ fontFamily: '\'SF Mono\',monospace', color: t0 }">{{ current.block?.header?.chain_id }}</td>
             </tr>
             <tr>
               <td class="label-cell">Proposer</td>
@@ -229,13 +240,13 @@ onBeforeRouteUpdate(async (to, from, next) => {
 
 <style scoped>
 .inf-detail {
-  color: #f0f0f0;
+  color: v-bind(t0);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 .inf-card {
-  background: #141414;
-  border: 1px solid #2d2d2d;
+  background: v-bind(cardBg);
+  border: 1px solid v-bind(cardBd);
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 16px;
@@ -248,15 +259,15 @@ onBeforeRouteUpdate(async (to, from, next) => {
 .inf-table td {
   padding: 11px 20px;
   font-size: 13px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid v-bind(rowBd);
   vertical-align: middle;
 }
 .inf-table tr:last-child td { border-bottom: none; }
-.inf-table tr:nth-child(even) td { background: rgba(0,0,0,0.18); }
+.inf-table tr:nth-child(even) td { background: v-bind(rowAlt); }
 .label-cell {
   width: 160px !important;
   font-size: 12px !important;
-  color: #555 !important;
+  color: #888 !important;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -264,14 +275,14 @@ onBeforeRouteUpdate(async (to, from, next) => {
 .inf-nav-btn {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
-  background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 6px;
+  background: v-bind(inputBg); border: 1px solid v-bind(inputBd); border-radius: 6px;
   color: #e8a500; text-decoration: none; font-size: 16px; font-weight: 600;
   transition: border-color 0.15s, background 0.15s;
 }
 .inf-nav-btn:hover { border-color: #e8a500; background: rgba(232,165,0,0.08); }
 
 .inf-section-title {
-  font-size: 12px; font-weight: 600; color: #666;
+  font-size: 12px; font-weight: 600; color: #888;
   text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
 }
 
@@ -280,20 +291,20 @@ onBeforeRouteUpdate(async (to, from, next) => {
   width: 100% !important;
   border-collapse: collapse !important;
   background: transparent !important;
-  color: #d0d0d0 !important;
+  color: v-bind(t1) !important;
 }
-:deep(.table thead tr) { background: #1a1a1a !important; }
+:deep(.table thead tr) { background: v-bind(inputBg) !important; }
 :deep(.table thead th) {
   padding: 8px 12px !important;
   font-size: 10px !important; font-weight: 500 !important;
-  color: #555 !important; text-transform: uppercase; letter-spacing: 0.06em;
-  background: #1a1a1a !important; border: none !important; border-bottom: 1px solid #2d2d2d !important;
+  color: #888 !important; text-transform: uppercase; letter-spacing: 0.06em;
+  background: v-bind(inputBg) !important; border: none !important; border-bottom: 1px solid v-bind(cardBd) !important;
 }
-:deep(.table tbody tr) { border-bottom: 1px solid #1a1a1a !important; background: transparent !important; }
-:deep(.table tbody tr:hover) { background: #1e1e1e !important; }
+:deep(.table tbody tr) { border-bottom: 1px solid v-bind(rowBd) !important; background: transparent !important; }
+:deep(.table tbody tr:hover) { background: v-bind(rowAlt) !important; }
 :deep(.table tbody td) {
   padding: 9px 12px !important; font-size: 12px !important;
-  color: #d0d0d0 !important; background: transparent !important;
+  color: v-bind(t1) !important; background: transparent !important;
   border: none !important; font-family: 'SF Mono', monospace;
 }
 :deep(.text-primary) { color: #e8a500 !important; }

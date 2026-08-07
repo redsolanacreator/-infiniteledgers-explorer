@@ -6,6 +6,12 @@ meta:
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
+import ThemeToggle from '@/components/inf/ThemeToggle.vue'
+import { useBaseStore } from '@/stores'
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+const baseStore = useBaseStore()
+const isLight   = computed(() => baseStore.theme === 'light')
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const API  = 'https://api.infiniteledgers.com'
@@ -281,7 +287,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="pg">
+  <div class="pg" :class="{ 'theme-light': isLight }">
 
     <!-- ── Reconnect banner ──────────────────────────────────────────────── -->
     <div v-if="reconnecting" class="reconnect-banner">
@@ -299,6 +305,7 @@ onUnmounted(() => {
         <div class="nav-right">
           <span class="live-dot" :class="connected ? 'dot-ok' : 'dot-err'"></span>
           <span class="chain-id-label">{{ chainId }}</span>
+          <ThemeToggle />
           <RouterLink :to="`/${CHAIN}`" class="explorer-btn">Explorer →</RouterLink>
         </div>
       </div>
@@ -403,7 +410,7 @@ onUnmounted(() => {
           </div>
           <div v-else>
             <div v-for="d in allDenoms.filter(d => d.denom !== DENOM)" :key="d.denom"
-              style="font-size:13px;color:#d0d0d0;font-family:monospace;padding:3px 0;">
+              class="denom-item">
               {{ d.denom }}: {{ d.amount }}
             </div>
           </div>
@@ -762,6 +769,8 @@ onUnmounted(() => {
 .fl:hover { color: #e8a500; }
 .fl-primary { color: #e8a500; }
 
+.denom-item { font-size: 13px; color: #d0d0d0; font-family: monospace; padding: 3px 0; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 800px) {
   .two-col { grid-template-columns: 1fr; }
@@ -771,4 +780,48 @@ onUnmounted(() => {
   .tx-head, .tx-row { grid-template-columns: 130px 1fr 60px 20px; }
   .tx-head > :nth-child(2), .tx-row > :nth-child(2) { display: none; }
 }
+
+/* ── Light theme ─────────────────────────────────────────────────────────────── */
+.pg.theme-light { background: #f5f7fa; color: #111111; }
+.pg.theme-light .navbar { background: rgba(255,255,255,0.97); border-bottom-color: #e0e0e0; }
+.pg.theme-light .brand-name { color: #111111; }
+.pg.theme-light .chain-id-label { color: #888; }
+.pg.theme-light .hero {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% -5%, rgba(232,165,0,0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 85% 120%, rgba(232,165,0,0.04) 0%, transparent 60%),
+    #f5f7fa;
+  border-bottom-color: #e0e0e0;
+}
+.pg.theme-light .hero-title { color: #111111; }
+.pg.theme-light .hero-sub { color: #888; }
+.pg.theme-light .tick { color: #777; }
+.pg.theme-light .tick-sep { color: #ccc; }
+.pg.theme-light .card { background: #ffffff; border-color: #e0e0e0; }
+.pg.theme-light .ctitle { color: #111111; }
+.pg.theme-light .divider { background: #ebebeb; }
+.pg.theme-light .slabel { color: #888; }
+.pg.theme-light .sval { color: #111111; }
+.pg.theme-light .no-data,
+.pg.theme-light .no-data-sm { color: #aaa; font-style: italic; }
+.pg.theme-light .supply-total { color: #111111; }
+.pg.theme-light .leg-val { color: #444; }
+.pg.theme-light .era-labels { color: #999; }
+.pg.theme-light .section-label { color: #888; }
+.pg.theme-light .empty { color: #999; }
+.pg.theme-light .tx-head { border-bottom-color: #e0e0e0; }
+.pg.theme-light .tx-head > span { color: #aaa; }
+.pg.theme-light .tx-row { border-bottom-color: #f0f0f0; }
+.pg.theme-light .tx-row:hover { background: rgba(0,0,0,0.025); }
+.pg.theme-light .blk-link { color: #777; }
+.pg.theme-light .age { color: #888; }
+.pg.theme-light .blk-head { border-bottom-color: #e0e0e0; }
+.pg.theme-light .blk-head > span { color: #aaa; }
+.pg.theme-light .blk-row { border-bottom-color: #f0f0f0; }
+.pg.theme-light .blk-row-alt { background: rgba(0,0,0,0.04); }
+.pg.theme-light .proposer-cell { color: #999; }
+.pg.theme-light .footer { border-top-color: #e0e0e0; }
+.pg.theme-light .fl { color: #888; }
+.pg.theme-light .denom-item { color: #444; }
+.pg.theme-light .reconnect-banner { background: #fff0f0; border-bottom-color: #fcc; }
 </style>

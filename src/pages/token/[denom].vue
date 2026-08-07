@@ -6,6 +6,12 @@ meta:
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
+import ThemeToggle from '@/components/inf/ThemeToggle.vue'
+import { useBaseStore } from '@/stores'
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+const baseStore = useBaseStore()
+const isLight   = computed(() => baseStore.theme === 'light')
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const props   = defineProps(['denom'])
@@ -286,7 +292,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="pg">
+  <div class="pg" :class="{ 'theme-light': isLight }">
 
     <!-- ── Navbar ──────────────────────────────────────────────────────────── -->
     <nav class="navbar">
@@ -299,6 +305,7 @@ onUnmounted(() => {
           <InfSearchBar :chain="CHAIN" />
         </div>
         <div class="nav-right">
+          <ThemeToggle />
           <RouterLink to="/"              class="nav-btn">Home</RouterLink>
           <RouterLink :to="`/${CHAIN}`"  class="nav-btn">Explorer →</RouterLink>
         </div>
@@ -437,8 +444,8 @@ onUnmounted(() => {
 
           <!-- Peak info -->
           <div v-if="allTxs.length > 0" style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#444;">
-            <span>Total txs: <span style="color:#d0d0d0;">{{ allTxs.length.toLocaleString() }}</span></span>
-            <span>Peak day: <span style="color:#d0d0d0;">{{ Math.max(...chartDays.map(d=>d.count)) }} txs</span></span>
+            <span>Total txs: <span class="chart-stat-val">{{ allTxs.length.toLocaleString() }}</span></span>
+            <span>Peak day: <span class="chart-stat-val">{{ Math.max(...chartDays.map(d=>d.count)) }} txs</span></span>
           </div>
         </div><!-- /chart card -->
 
@@ -601,7 +608,7 @@ onUnmounted(() => {
                   </svg>
                 </button>
               </span>
-              <span style="font-family:'SF Mono',monospace;font-size:13px;color:#d0d0d0;">
+              <span class="h-balance">
                 {{ fmtINF(h.balanceMinf) }} INF
               </span>
               <span style="font-family:'SF Mono',monospace;font-size:13px;color:#888;text-align:right;">
@@ -765,6 +772,8 @@ onUnmounted(() => {
 .addr-link:hover { color: #e8a500; }
 .amount-cell { font-family: 'SF Mono', monospace; font-size: 12px; color: #d0d0d0; white-space: nowrap; }
 .muted { color: #444; }
+.chart-stat-val { color: #d0d0d0; }
+.h-balance { font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; }
 
 /* ── Holders table ───────────────────────────────────────────────────────────── */
 .h-head, .h-row {
@@ -806,4 +815,51 @@ onUnmounted(() => {
   .th-title-row { flex-wrap: wrap; }
   .tok-badges { margin-left: 0; }
 }
+
+/* ── Light theme ─────────────────────────────────────────────────────────────── */
+.pg.theme-light { background: #f5f7fa; color: #111111; }
+.pg.theme-light .navbar { background: rgba(255,255,255,0.97); border-bottom-color: #e0e0e0; }
+.pg.theme-light .brand-name { color: #111111; }
+.pg.theme-light .token-header {
+  background: radial-gradient(ellipse 70% 80% at 50% -20%, rgba(232,165,0,0.08) 0%, transparent 60%), #f5f7fa;
+  border-bottom-color: #e0e0e0;
+}
+.pg.theme-light .tok-name { color: #111111; }
+.pg.theme-light .tok-sub { color: #888; }
+.pg.theme-light .mono { color: #888; }
+.pg.theme-light .nav-btn { color: #666; border-color: #e0e0e0; }
+.pg.theme-light .card { background: #ffffff; border-color: #e0e0e0; }
+.pg.theme-light .ctitle { color: #111111; }
+.pg.theme-light .slabel { color: #888; }
+.pg.theme-light .divider { background: #ebebeb; }
+.pg.theme-light .mkt-val { color: #111111; }
+.pg.theme-light .mkt-val-sub { color: #888; }
+.pg.theme-light .no-data { color: #aaa; }
+.pg.theme-light .no-data-note { color: #bbb; }
+.pg.theme-light .no-data-sm { color: #aaa; }
+.pg.theme-light .leg-val { color: #444; }
+.pg.theme-light .tab-bar { border-bottom-color: #e0e0e0; }
+.pg.theme-light .tab-btn { color: #888; }
+.pg.theme-light .tab-btn:hover { color: #111111; }
+.pg.theme-light .tab-count { background: #f0f0f0; color: #888; }
+.pg.theme-light .tx-head { border-bottom-color: #e0e0e0; }
+.pg.theme-light .tx-head > span { color: #aaa; }
+.pg.theme-light .tx-row { border-bottom-color: #f0f0f0; }
+.pg.theme-light .tx-row:hover { background: rgba(0,0,0,0.025); }
+.pg.theme-light .addr-link { color: #666; }
+.pg.theme-light .amount-cell { color: #333; }
+.pg.theme-light .age { color: #888; }
+.pg.theme-light .empty { color: #999; }
+.pg.theme-light .h-head { border-bottom-color: #e0e0e0; }
+.pg.theme-light .h-head > span { color: #aaa; }
+.pg.theme-light .h-row { border-bottom-color: #f0f0f0; }
+.pg.theme-light .h-row:hover { background: rgba(0,0,0,0.025); }
+.pg.theme-light .h-balance { color: #333; }
+.pg.theme-light .muted { color: #999; }
+.pg.theme-light .pagination { border-top-color: #e0e0e0; }
+.pg.theme-light .page-btn { background: #f5f5f5; border-color: #e0e0e0; color: #666; }
+.pg.theme-light .page-info { color: #888; }
+.pg.theme-light .footer { border-top-color: #e0e0e0; }
+.pg.theme-light .fl { color: #888; }
+.pg.theme-light .chart-stat-val { color: #333; }
 </style>
