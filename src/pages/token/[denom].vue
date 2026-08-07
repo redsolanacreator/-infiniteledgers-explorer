@@ -4,12 +4,17 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
 import { useBaseStore } from '@/stores'
 import { KNOWN_ASSETS } from '@/config/knownAssets'
 import type { KnownAsset } from '@/config/knownAssets'
+import { parseCreatorFromDenom } from '@/utils/tokenfactory'
+import { detectWallets, connectWallet, type WalletId } from '@/utils/multiWallet'
+import { executeSetMetadata } from '@/utils/executeSetMetadata'
+import { fetchTokenMetadata, CHAIN_ID, CHAIN_SUGGEST_CONFIG } from '@/config/tokenMetadataContract'
+import type { TokenMetadata } from '@/config/tokenMetadataContract'
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const baseStore = useBaseStore()
@@ -25,6 +30,119 @@ const asset    = computed<KnownAsset | null>(() => KNOWN_ASSETS[denom.value] ?? 
 const symbol   = computed(() => asset.value?.symbol ?? denom.value.toUpperCase())
 const decimals = computed(() => asset.value?.decimals ?? 0)
 const logo     = computed(() => asset.value?.logo ?? null)
+
+// ── Creator / tokenfactory vs native ─────────────────────────────────────────────
+const isNativeDenom  = computed(() => denom.value === 'minf')
+const creatorAddress = computed(() => (isNativeDenom.value ? null : parseCreatorFromDenom(denom.value)))
+
+// ── Token metadata (from the token-metadata CosmWasm contract) ──────────────────
+const metadata       = ref<TokenMetadata | null>(null)
+const metadataLoaded = ref(false)
+
+async function loadMetadata() {
+  metadataLoaded.value = false
+  try {
+    metadata.value = await fetchTokenMetadata(denom.value)
+  } catch {
+    metadata.value = null
+  } finally {
+    metadataLoaded.value = true
+  }
+}
+
+// ── Edit flow (wallet connect -> creator check -> form -> submit) ───────────────
+type EditState =
+  | 'idle' | 'choosing-wallet' | 'connecting' | 'no-wallet'
+  | 'not-creator' | 'editing' | 'submitting' | 'success' | 'error'
+
+const editState          = ref<EditState>('idle')
+const editError          = ref('')
+const availableWallets   = ref<{ id: WalletId; name: string }[]>([])
+const connectedAddress   = ref<string | null>(null)
+const connectedWalletName = ref<string | null>(null)
+const activeOfflineSigner = ref<any>(null)
+
+const form = reactive({
+  description: '',
+  logo_url: '',
+  website: '',
+  twitter: '',
+  discord: '',
+})
+
+function openEditFlow() {
+  editError.value = ''
+  const wallets = detectWallets()
+  if (wallets.length === 0) {
+    editState.value = 'no-wallet'
+    return
+  }
+  if (wallets.length === 1) {
+    startConnect(wallets[0].id)
+    return
+  }
+  availableWallets.value = wallets
+  editState.value = 'choosing-wallet'
+}
+
+async function startConnect(walletId: WalletId) {
+  editState.value = 'connecting'
+  const result = await connectWallet(walletId, CHAIN_ID, CHAIN_SUGGEST_CONFIG)
+
+  if (!result.success) {
+    if (result.reason === 'not-installed') {
+      editState.value = 'no-wallet'
+    } else if (result.reason === 'rejected') {
+      editError.value = 'Connection cancelled.'
+      editState.value = 'error'
+    } else {
+      editError.value = result.message || 'Could not connect wallet.'
+      editState.value = 'error'
+    }
+    return
+  }
+
+  connectedAddress.value    = result.address!
+  connectedWalletName.value = result.walletName!
+  activeOfflineSigner.value = result.offlineSigner
+
+  if (!creatorAddress.value || result.address !== creatorAddress.value) {
+    editState.value = 'not-creator'
+    return
+  }
+
+  form.description = metadata.value?.description ?? ''
+  form.logo_url    = metadata.value?.logo_url ?? ''
+  form.website      = metadata.value?.website ?? ''
+  form.twitter        = metadata.value?.twitter ?? ''
+  form.discord          = metadata.value?.discord ?? ''
+  editState.value = 'editing'
+}
+
+async function submitMetadata() {
+  editState.value = 'submitting'
+  editError.value = ''
+  try {
+    await executeSetMetadata(activeOfflineSigner.value, connectedAddress.value!, {
+      denom: denom.value,
+      description: form.description.trim() || null,
+      logo_url: form.logo_url.trim() || null,
+      website: form.website.trim() || null,
+      twitter: form.twitter.trim() || null,
+      discord: form.discord.trim() || null,
+    })
+    editState.value = 'success'
+    await loadMetadata()
+  } catch (err: any) {
+    editError.value = err?.message || 'Transaction failed.'
+    editState.value = 'editing'
+  }
+}
+
+function cancelEdit() {
+  editState.value = 'idle'
+  editError.value = ''
+}
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const connected       = ref(false)
@@ -292,7 +410,7 @@ let slowTimer: ReturnType<typeof setInterval>
 let vestTimer: ReturnType<typeof setInterval>
 
 onMounted(async () => {
-  await Promise.all([fetchSupply(), fetchVesting(), fetchHolders(), fetchAllTxs()])
+  await Promise.all([fetchSupply(), fetchVesting(), fetchHolders(), fetchAllTxs(), loadMetadata()])
   fastTimer = setInterval(fetchAllTxs, 10000)
   slowTimer = setInterval(async () => {
     await Promise.all([fetchSupply(), fetchVesting(), fetchHolders()])
@@ -339,7 +457,8 @@ onUnmounted(() => {
             <div class="tok-sub">{{ asset?.name ?? 'Token' }} · <span class="mono">{{ denom }}</span></div>
           </div>
           <div class="tok-badges">
-            <span class="badge-green">Native</span>
+            <span v-if="isNativeDenom" class="badge-green">Native</span>
+            <span v-else class="badge-gold">Tokenfactory</span>
             <span class="badge-gold">Mainnet</span>
           </div>
         </div>
@@ -469,6 +588,126 @@ onUnmounted(() => {
         </div><!-- /chart card -->
 
       </div><!-- /two-col -->
+
+      <!-- ── Token Info: creator + metadata (tokenfactory creator-managed) ──── -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h3 class="ctitle">Token Info</h3>
+          <button v-if="editState === 'idle'" class="page-btn" @click="openEditFlow">Edit</button>
+        </div>
+
+        <!-- Creator -->
+        <div class="slabel" style="margin-bottom:4px;">Creator</div>
+        <div v-if="isNativeDenom" class="no-data-sm" style="margin-bottom:14px;">
+          Native token — no tokenfactory creator
+        </div>
+        <div v-else-if="creatorAddress" class="addr-cell" style="margin-bottom:14px;">
+          <RouterLink :to="`/${CHAIN}/account/${creatorAddress}`" class="addr-link mono" :title="creatorAddress">
+            {{ truncAddr(creatorAddress) }}
+          </RouterLink>
+          <button
+            @click="copyAddr(creatorAddress)"
+            style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;color:#555;vertical-align:middle;"
+            :title="copiedAddr === creatorAddress ? 'Copied!' : 'Copy'"
+          >
+            <span v-if="copiedAddr === creatorAddress" style="color:#4ade80;font-size:12px;">✓</span>
+            <svg v-else width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
+        <div v-else class="no-data-sm" style="margin-bottom:14px;">Unrecognized denom format</div>
+
+        <div class="divider"></div>
+
+        <!-- Metadata display (hidden once the edit form is open) -->
+        <template v-if="editState !== 'editing' && editState !== 'submitting'">
+          <div v-if="!metadataLoaded" class="no-data-sm">Loading metadata…</div>
+          <div v-else-if="!metadata" class="empty" style="padding:16px;">
+            No metadata has been set for this token yet.
+          </div>
+          <div v-else class="meta-grid">
+            <img v-if="metadata.logo_url" :src="metadata.logo_url" class="meta-logo" alt="" />
+            <div style="flex:1;min-width:0;">
+              <p v-if="metadata.description" style="font-size:13px;color:#ccc;margin:0 0 10px;">
+                {{ metadata.description }}
+              </p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;">
+                <a v-if="metadata.website" :href="metadata.website" target="_blank" rel="noopener noreferrer" class="meta-link">🌐 Website</a>
+                <a v-if="metadata.twitter" :href="metadata.twitter" target="_blank" rel="noopener noreferrer" class="meta-link">🐦 Twitter</a>
+                <a v-if="metadata.discord" :href="metadata.discord" target="_blank" rel="noopener noreferrer" class="meta-link">💬 Discord</a>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Wallet picker (multiple wallets installed) -->
+        <div v-if="editState === 'choosing-wallet'" style="margin-top:14px;">
+          <div class="slabel" style="margin-bottom:8px;">Choose a wallet</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button v-for="w in availableWallets" :key="w.id" class="page-btn" @click="startConnect(w.id)">{{ w.name }}</button>
+          </div>
+          <button class="meta-link" style="margin-top:10px;background:none;border:none;cursor:pointer;padding:0;" @click="cancelEdit">Cancel</button>
+        </div>
+
+        <div v-if="editState === 'connecting'" class="no-data-sm" style="margin-top:14px;">Connecting wallet…</div>
+
+        <div v-if="editState === 'no-wallet'" class="status-box" style="margin-top:14px;">
+          No compatible wallet found — install
+          <a href="https://www.keplr.app" target="_blank" rel="noopener noreferrer">Keplr</a>,
+          <a href="https://www.leapwallet.io" target="_blank" rel="noopener noreferrer">Leap</a>, or
+          <a href="https://www.cosmostation.io/wallet" target="_blank" rel="noopener noreferrer">Cosmostation</a>.
+          <div><button class="page-btn" style="margin-top:8px;" @click="cancelEdit">Close</button></div>
+        </div>
+
+        <div v-if="editState === 'not-creator'" class="status-box" style="margin-top:14px;">
+          Connected as <span class="mono">{{ truncAddr(connectedAddress || '') }}</span> via {{ connectedWalletName }}.
+          Only the token creator can edit this.
+          <div><button class="page-btn" style="margin-top:8px;" @click="cancelEdit">Close</button></div>
+        </div>
+
+        <!-- Edit form -->
+        <form v-if="editState === 'editing' || editState === 'submitting'" @submit.prevent="submitMetadata" style="margin-top:14px;">
+          <div class="edit-field">
+            <label class="slabel">Description</label>
+            <textarea v-model="form.description" rows="2" maxlength="280" class="edit-input"></textarea>
+          </div>
+          <div class="edit-field">
+            <label class="slabel">Logo URL</label>
+            <input v-model="form.logo_url" type="url" class="edit-input" placeholder="https://…" />
+          </div>
+          <div class="edit-field">
+            <label class="slabel">Website</label>
+            <input v-model="form.website" type="url" class="edit-input" placeholder="https://…" />
+          </div>
+          <div class="edit-field">
+            <label class="slabel">Twitter</label>
+            <input v-model="form.twitter" type="url" class="edit-input" placeholder="https://twitter.com/…" />
+          </div>
+          <div class="edit-field">
+            <label class="slabel">Discord</label>
+            <input v-model="form.discord" type="url" class="edit-input" placeholder="https://discord.gg/…" />
+          </div>
+          <div v-if="editError" class="status-box status-error" style="margin-bottom:10px;">{{ editError }}</div>
+          <div style="display:flex;gap:8px;">
+            <button type="submit" class="page-btn" :disabled="editState === 'submitting'">
+              {{ editState === 'submitting' ? 'Submitting…' : 'Save' }}
+            </button>
+            <button type="button" class="page-btn" :disabled="editState === 'submitting'" @click="cancelEdit">Cancel</button>
+          </div>
+        </form>
+
+        <div v-if="editState === 'success'" class="status-box status-success" style="margin-top:14px;">
+          Metadata updated.
+          <div><button class="page-btn" style="margin-top:8px;" @click="cancelEdit">Close</button></div>
+        </div>
+
+        <div v-if="editState === 'error'" class="status-box status-error" style="margin-top:14px;">
+          {{ editError }}
+          <div><button class="page-btn" style="margin-top:8px;" @click="cancelEdit">Close</button></div>
+        </div>
+      </div><!-- /token info card -->
 
       <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
       <div class="card tab-card">
@@ -730,6 +969,27 @@ onUnmounted(() => {
 .no-data { font-size: 15px; color: #555; font-style: italic; }
 .no-data-note { font-size: 11px; color: #333; margin-top: 2px; }
 .no-data-sm { font-size: 13px; color: #555; font-style: italic; }
+
+/* Token Info: metadata + edit flow */
+.meta-grid { display: flex; gap: 14px; align-items: flex-start; }
+.meta-logo { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+.meta-link { color: #e8a500; text-decoration: none; }
+.meta-link:hover { text-decoration: underline; }
+.status-box {
+  font-size: 12px; color: #ccc; background: #181818; border: 1px solid #2d2d2d;
+  border-radius: 8px; padding: 12px 14px; line-height: 1.6;
+}
+.status-box a { color: #e8a500; text-decoration: none; }
+.status-box a:hover { text-decoration: underline; }
+.status-error { border-color: rgba(248,113,113,0.35); color: #f87171; }
+.status-success { border-color: rgba(74,222,128,0.35); color: #4ade80; }
+.edit-field { margin-bottom: 10px; }
+.edit-field .slabel { margin-bottom: 4px; }
+.edit-input {
+  width: 100%; background: #0d0d0d; border: 1px solid #2d2d2d; border-radius: 6px;
+  padding: 8px 10px; font-size: 13px; color: #f0f0f0; font-family: inherit;
+}
+.edit-input:focus { outline: none; border-color: #e8a500; }
 
 /* Supply bar */
 .bar-track { height: 7px; background: rgba(232,165,0,0.08); border: 1px solid rgba(232,165,0,0.12); border-radius: 4px; overflow: hidden; }
