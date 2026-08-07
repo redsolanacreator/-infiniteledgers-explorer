@@ -407,6 +407,12 @@ onUnmounted(() => {
               {{ d.denom }}: {{ d.amount }}
             </div>
           </div>
+
+          <div style="margin-top:16px;">
+            <RouterLink to="/token/minf" class="token-detail-link">
+              View INF token details →
+            </RouterLink>
+          </div>
         </div><!-- /token card -->
 
         <!-- Network stats card -->
@@ -694,6 +700,13 @@ onUnmounted(() => {
 .leg-circ   { background: #e8a500; }
 .leg-lock   { background: rgba(232,165,0,0.15); border: 1px solid rgba(232,165,0,0.35); }
 .leg-val    { color: #c0c0c0; font-weight: 500; margin-right: 4px; }
+.token-detail-link {
+  display: inline-block; font-size: 12px; color: #e8a500;
+  text-decoration: none; border: 1px solid rgba(232,165,0,0.3);
+  border-radius: 4px; padding: 5px 12px;
+  transition: border-color .15s, background .15s;
+}
+.token-detail-link:hover { border-color: #e8a500; background: rgba(232,165,0,0.06); }
 
 /* Stat grid */
 .stat4  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
