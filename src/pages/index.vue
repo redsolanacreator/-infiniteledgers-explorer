@@ -307,10 +307,10 @@ onUnmounted(() => {
       padding: 16px 24px; text-align: center;
       font-size: 12px; color: #444;
     ">
-      <a :href="`/${CHAIN}`"     style="color: #e8a500; text-decoration: none; margin: 0 12px;">Full Explorer</a>
-      <a :href="`/${CHAIN}/block`" style="color: #666; text-decoration: none; margin: 0 12px;">Blocks</a>
-      <a :href="`/${CHAIN}/tx`"    style="color: #666; text-decoration: none; margin: 0 12px;">Transactions</a>
-      <a :href="`/${CHAIN}/staking`" style="color: #666; text-decoration: none; margin: 0 12px;">Validators</a>
+      <RouterLink :to="`/${CHAIN}`"       style="color: #e8a500; text-decoration: none; margin: 0 12px;">Full Explorer</RouterLink>
+      <RouterLink :to="`/${CHAIN}/block`"   style="color: #666; text-decoration: none; margin: 0 12px;">Blocks</RouterLink>
+      <RouterLink :to="`/${CHAIN}/tx`"      style="color: #666; text-decoration: none; margin: 0 12px;">Transactions</RouterLink>
+      <RouterLink :to="`/${CHAIN}/staking`" style="color: #666; text-decoration: none; margin: 0 12px;">Validators</RouterLink>
     </footer>
 
   </div>
