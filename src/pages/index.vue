@@ -342,11 +342,11 @@ onUnmounted(() => {
 
         <!-- Token / supply card -->
         <div class="card">
-          <div class="chead">
+          <RouterLink to="/token/minf" class="chead chead-link">
             <img src="/logos/infiniteledgers.svg" alt="INF" style="width:22px;height:22px;border-radius:50%;margin-right:8px;" />
             <span class="ctitle">INF Token</span>
             <span class="badge-native">Native</span>
-          </div>
+          </RouterLink>
 
           <!-- Price — no market exists, shown honestly -->
           <div class="mkt-row">
@@ -675,6 +675,17 @@ onUnmounted(() => {
   padding: 20px 24px;
 }
 .chead { display: flex; align-items: center; margin-bottom: 14px; }
+.chead-link {
+  text-decoration: none;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  transition: background .15s;
+  cursor: pointer;
+}
+.chead-link:hover { background: rgba(232,165,0,0.07); }
+.chead-link:hover .ctitle { color: #e8a500; }
+.pg.theme-light .chead-link:hover { background: rgba(232,165,0,0.08); }
 .ctitle { font-size: 14px; font-weight: 700; color: #f0f0f0; }
 .badge-native {
   margin-left: 8px; font-size: 10px; font-weight: 600;
