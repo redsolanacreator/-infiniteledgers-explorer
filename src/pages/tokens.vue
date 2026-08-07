@@ -162,7 +162,7 @@ onUnmounted(() => clearInterval(refreshTimer))
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(tok, i) in tokens" :key="tok.denom" class="tok-row" @click="$router.push(`/token/${tok.denom}`)">
+              <tr v-for="(tok, i) in tokens" :key="tok.denom" class="tok-row" @click="$router.push(`/token/${encodeURIComponent(tok.denom)}`)">
                 <td class="td-num">{{ i + 1 }}</td>
                 <td>
                   <div class="tok-cell">
