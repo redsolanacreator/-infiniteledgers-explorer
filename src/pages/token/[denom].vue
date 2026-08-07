@@ -8,23 +8,29 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
 import { useBaseStore } from '@/stores'
+import { KNOWN_ASSETS } from '@/config/knownAssets'
+import type { KnownAsset } from '@/config/knownAssets'
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const baseStore = useBaseStore()
 const isLight   = computed(() => baseStore.theme === 'light')
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-const props   = defineProps(['denom'])
-const API     = 'https://api.infiniteledgers.com'
-const CHAIN   = 'infiniteledgers'
-const DENOM   = 'minf'
-const VESTING_ADDR = 'inf14h3h0n645e0zln9gn004un47mdn9yfg0nswtyv'
+// ── Route / asset metadata ─────────────────────────────────────────────────────
+const props    = defineProps(['denom'])
+const API      = 'https://api.infiniteledgers.com'
+const CHAIN    = 'infiniteledgers'
+
+const denom    = computed(() => (props.denom as string) || 'minf')
+const asset    = computed<KnownAsset | null>(() => KNOWN_ASSETS[denom.value] ?? null)
+const symbol   = computed(() => asset.value?.symbol ?? denom.value.toUpperCase())
+const decimals = computed(() => asset.value?.decimals ?? 0)
+const logo     = computed(() => asset.value?.logo ?? null)
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const connected       = ref(false)
-const totalSupplyMinf = ref(0n)
-const unvestedMinf    = ref(0n)
-const vestingOrigMinf = ref(0n)
+const totalSupply = ref(0n)
+const unvested    = ref(0n)
+const vestingOrig = ref(0n)
 const vestingStartSec = ref(0)
 const vestingEndSec   = ref(0)
 
@@ -50,14 +56,14 @@ interface TxRow {
   from: string; to: string; amount: string
 }
 interface HolderRow {
-  rank: number; address: string; balanceMinf: bigint
+  rank: number; address: string; balance: bigint
 }
 
 // ── Derived ────────────────────────────────────────────────────────────────────
-const circulatingMinf = computed(() =>
-  totalSupplyMinf.value > unvestedMinf.value
-    ? totalSupplyMinf.value - unvestedMinf.value
-    : totalSupplyMinf.value
+const circulating = computed(() =>
+  totalSupply.value > unvested.value
+    ? totalSupply.value - unvested.value
+    : totalSupply.value
 )
 
 // Paginated tx slices
@@ -117,11 +123,17 @@ async function sfetch(url: string): Promise<any> {
   } catch (e) { clearTimeout(t); throw e }
 }
 
-function fmtINF(minf: bigint): string {
-  const whole = minf / 1_000_000n
-  const frac  = minf % 1_000_000n
+function fmtWithDecimals(amount: bigint, dec: number): string {
+  if (dec === 0) return amount.toLocaleString()
+  const div   = BigInt(10 ** dec)
+  const whole = amount / div
+  const frac  = amount % div
   if (frac === 0n) return whole.toLocaleString()
-  return `${whole.toLocaleString()}.${frac.toString().padStart(6, '0').replace(/0+$/, '')}`
+  return `${whole.toLocaleString()}.${frac.toString().padStart(dec, '0').replace(/0+$/, '')}`
+}
+
+function fmtAmt(amount: bigint): string {
+  return fmtWithDecimals(amount, decimals.value)
 }
 
 function fmtCoins(coins: any): string {
@@ -129,8 +141,9 @@ function fmtCoins(coins: any): string {
   const arr = Array.isArray(coins) ? coins : [coins]
   const parts = arr.map((c: any) => {
     if (!c?.denom) return ''
-    if (c.denom === DENOM) return `${fmtINF(BigInt(c.amount || '0'))} INF`
-    return `${Number(c.amount).toLocaleString()} ${c.denom.toUpperCase()}`
+    const a = KNOWN_ASSETS[c.denom]
+    if (a) return `${fmtWithDecimals(BigInt(c.amount || '0'), a.decimals)} ${a.symbol}`
+    return `${c.amount} ${c.denom}`
   }).filter(Boolean)
   return parts.length ? parts.join(', ') : '—'
 }
@@ -210,31 +223,34 @@ function parseTxRow(txr: any, tx: any): TxRow {
 }
 
 function recomputeUnvested() {
-  const ov = vestingOrigMinf.value
+  if (!asset.value?.vestingAddr) { unvested.value = 0n; return }
+  const ov = vestingOrig.value
   const st = vestingStartSec.value
   const et = vestingEndSec.value
-  if (ov === 0n || et === 0) { unvestedMinf.value = 0n; return }
+  if (ov === 0n || et === 0) { unvested.value = 0n; return }
   const now = Math.floor(Date.now() / 1000)
-  if (st === 0 || now <= st) { unvestedMinf.value = ov; return }
-  if (now >= et)              { unvestedMinf.value = 0n; return }
+  if (st === 0 || now <= st) { unvested.value = ov; return }
+  if (now >= et)              { unvested.value = 0n; return }
   const vested = ov * BigInt(now - st) / BigInt(et - st)
-  unvestedMinf.value = ov - vested
+  unvested.value = ov - vested
 }
 
 // ── Fetch functions ────────────────────────────────────────────────────────────
 async function fetchSupply() {
   try {
-    const d = await sfetch(`${API}/cosmos/bank/v1beta1/supply/by_denom?denom=${DENOM}`)
-    totalSupplyMinf.value = BigInt(d.amount?.amount ?? '0')
+    const d = await sfetch(`${API}/cosmos/bank/v1beta1/supply/by_denom?denom=${denom.value}`)
+    totalSupply.value = BigInt(d.amount?.amount ?? '0')
   } catch {}
 }
 
 async function fetchVesting() {
+  const vestAddr = asset.value?.vestingAddr
+  if (!vestAddr) { unvested.value = 0n; vestingOrig.value = 0n; return }
   try {
-    const d   = await sfetch(`${API}/cosmos/auth/v1beta1/accounts/${VESTING_ADDR}`)
+    const d   = await sfetch(`${API}/cosmos/auth/v1beta1/accounts/${vestAddr}`)
     const acc = d.account ?? {}
     const bva = acc.base_vesting_account ?? {}
-    vestingOrigMinf.value = BigInt(bva.original_vesting?.[0]?.amount ?? '0')
+    vestingOrig.value     = BigInt(bva.original_vesting?.[0]?.amount ?? '0')
     vestingStartSec.value = Number(acc.start_time ?? '0')
     vestingEndSec.value   = Number(bva.end_time   ?? '0')
     recomputeUnvested()
@@ -243,7 +259,7 @@ async function fetchVesting() {
 
 async function fetchHolders() {
   try {
-    const d = await sfetch(`${API}/cosmos/bank/v1beta1/denom_owners/${DENOM}?pagination.limit=200`)
+    const d = await sfetch(`${API}/cosmos/bank/v1beta1/denom_owners/${denom.value}?pagination.limit=200`)
     const raw: any[] = d.denom_owners ?? []
     const sorted = [...raw].sort(
       (a, b) => (BigInt(b.balance.amount) > BigInt(a.balance.amount) ? 1 : -1)
@@ -251,7 +267,7 @@ async function fetchHolders() {
     holders.value = sorted.map((o, i) => ({
       rank: i + 1,
       address: o.address,
-      balanceMinf: BigInt(o.balance.amount),
+      balance: BigInt(o.balance.amount),
     }))
     connected.value = true
   } catch { connected.value = false }
@@ -316,10 +332,11 @@ onUnmounted(() => {
     <div class="token-header">
       <div class="th-inner">
         <div class="th-title-row">
-          <img src="/logos/infiniteledgers.svg" alt="INF" class="tok-logo" />
+          <img v-if="logo" :src="logo" :alt="symbol" class="tok-logo" />
+          <div v-else class="tok-logo tok-logo-generic">{{ symbol[0] }}</div>
           <div>
-            <h1 class="tok-name">INF</h1>
-            <div class="tok-sub">Infinite Ledgers · <span class="mono">{{ DENOM }}</span></div>
+            <h1 class="tok-name">{{ symbol }}</h1>
+            <div class="tok-sub">{{ asset?.name ?? 'Token' }} · <span class="mono">{{ denom }}</span></div>
           </div>
           <div class="tok-badges">
             <span class="badge-green">Native</span>
@@ -343,7 +360,7 @@ onUnmounted(() => {
             <div class="mkt-cell">
               <div class="slabel">Price</div>
               <div class="no-data">No market data</div>
-              <div class="no-data-note">INF has no exchange listing</div>
+              <div class="no-data-note">{{ symbol }} has no exchange listing</div>
             </div>
             <div class="mkt-cell">
               <div class="slabel">Market Cap</div>
@@ -352,8 +369,8 @@ onUnmounted(() => {
             </div>
             <div class="mkt-cell">
               <div class="slabel">Current Supply</div>
-              <div class="mkt-val">{{ fmtINF(totalSupplyMinf) }}</div>
-              <div class="mkt-val-sub">INF · 400,000,000 fixed</div>
+              <div class="mkt-val">{{ fmtAmt(totalSupply) }}</div>
+              <div class="mkt-val-sub">{{ asset?.maxSupply ? `${symbol} · ${asset.maxSupply} fixed` : symbol }}</div>
             </div>
             <div class="mkt-cell">
               <div class="slabel">Holders</div>
@@ -384,18 +401,20 @@ onUnmounted(() => {
           <!-- Supply split -->
           <div class="slabel" style="margin-bottom:6px;">Supply Split</div>
           <div class="bar-track">
-            <div class="bar-fill" :style="`width:${totalSupplyMinf > 0n ? Number(circulatingMinf * 10000n / totalSupplyMinf)/100 : 100}%`"></div>
+            <div class="bar-fill" :style="`width:${totalSupply > 0n ? Number(circulating * 10000n / totalSupply)/100 : 100}%`"></div>
           </div>
           <div class="legend-row">
             <span class="leg-dot leg-circ"></span>
             <span class="slabel">Circulating</span>
-            <span class="leg-val">{{ fmtINF(circulatingMinf) }} INF</span>
-            <span class="leg-dot leg-lock" style="margin-left:8px;"></span>
-            <span class="slabel">Locked</span>
-            <span class="leg-val">{{ fmtINF(unvestedMinf) }} INF</span>
+            <span class="leg-val">{{ fmtAmt(circulating) }} {{ symbol }}</span>
+            <template v-if="asset?.vestingAddr && unvested > 0n">
+              <span class="leg-dot leg-lock" style="margin-left:8px;"></span>
+              <span class="slabel">Locked</span>
+              <span class="leg-val">{{ fmtAmt(unvested) }} {{ symbol }}</span>
+            </template>
           </div>
-          <div style="font-size:11px;color:#444;margin-top:4px;">
-            Locked = founder vesting · linear release Aug 2026 → 2046
+          <div v-if="asset?.vestingAddr && asset?.vestingNote" style="font-size:11px;color:#444;margin-top:4px;">
+            {{ asset.vestingNote }}
           </div>
         </div><!-- /market overview -->
 
@@ -406,7 +425,7 @@ onUnmounted(() => {
             <span style="font-size:11px;color:#444;">Last 14 days</span>
           </div>
           <div style="font-size:11px;color:#555;margin-bottom:16px;">
-            Price chart unavailable — no market exists for INF.
+            Price chart unavailable — no market exists for {{ symbol }}.
             Showing on-chain transaction count instead.
           </div>
 
@@ -609,10 +628,10 @@ onUnmounted(() => {
                 </button>
               </span>
               <span class="h-balance">
-                {{ fmtINF(h.balanceMinf) }} INF
+                {{ fmtAmt(h.balance) }} {{ symbol }}
               </span>
               <span style="font-family:'SF Mono',monospace;font-size:13px;color:#888;text-align:right;">
-                {{ totalSupplyMinf > 0n ? (Number(h.balanceMinf * 10000n / totalSupplyMinf) / 100).toFixed(3) + '%' : '—' }}
+                {{ totalSupply > 0n ? (Number(h.balance * 10000n / totalSupply) / 100).toFixed(3) + '%' : '—' }}
               </span>
             </div>
 
@@ -682,6 +701,7 @@ onUnmounted(() => {
 .th-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
 .th-title-row { display: flex; align-items: center; gap: 16px; }
 .tok-logo { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #2d2d2d; }
+.tok-logo-generic { display:flex;align-items:center;justify-content:center;background:#1e1e1e;color:#e8a500;font-size:18px;font-weight:700;flex-shrink:0; }
 .tok-name { font-size: 28px; font-weight: 800; color: #f0f0f0; margin: 0; letter-spacing: -0.02em; }
 .tok-sub { font-size: 13px; color: #555; margin-top: 2px; }
 .mono { font-family: 'SF Mono', monospace; font-size: 12px; color: #666; }

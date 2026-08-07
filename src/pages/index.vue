@@ -415,9 +415,12 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div style="margin-top:16px;">
+          <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
             <RouterLink to="/token/minf" class="token-detail-link">
               View INF token details →
+            </RouterLink>
+            <RouterLink to="/tokens" class="token-detail-link">
+              View all tokens →
             </RouterLink>
           </div>
         </div><!-- /token card -->
