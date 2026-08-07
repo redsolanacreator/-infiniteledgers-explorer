@@ -9,6 +9,8 @@ import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
 import { useBaseStore } from '@/stores'
 import { KNOWN_ASSETS, denomToSymbol } from '@/config/knownAssets'
+import { isIbcDenom, resolveIbcDenom } from '@/utils/ibcDenom'
+import { fetchPriceInInf } from '@/config/ammContract'
 
 const API   = 'https://api.infiniteledgers.com'
 const CHAIN = 'infiniteledgers'
@@ -24,6 +26,10 @@ interface TokenRow {
   decimals: number
   holders: number | null
   loading: boolean
+  isIbc: boolean
+  ibcResolved: boolean
+  priceInInf: number | null
+  priceLoading: boolean
 }
 
 const tokens  = ref<TokenRow[]>([])
@@ -66,14 +72,21 @@ async function fetchTokens() {
 
     tokens.value = supply.map(({ denom, amount }) => {
       const asset = KNOWN_ASSETS[denom]
+      const ibc   = isIbcDenom(denom)
       return {
         denom,
-        symbol:   asset?.symbol ?? denomToSymbol(denom),
+        // IBC denoms get a placeholder (never the raw hash) until the
+        // general denom-trace resolution below fills in the real symbol.
+        symbol:   asset?.symbol ?? (ibc ? 'IBC' : denomToSymbol(denom)),
         logo:     asset?.logo   ?? null,
         totalRaw: BigInt(amount),
         decimals: asset?.decimals ?? 0,
         holders:  null,
         loading:  true,
+        isIbc:    ibc,
+        ibcResolved: !ibc,
+        priceInInf: null,
+        priceLoading: denom !== 'minf',
       }
     })
 
@@ -91,10 +104,49 @@ async function fetchTokens() {
         }
       })
     )
+
+    // General IBC denom resolution -- runs for every ibc/ denom, not just ATOM.
+    await Promise.allSettled(
+      tokens.value.map(async (tok, i) => {
+        if (!tok.isIbc) return
+        const resolved = await resolveIbcDenom(tok.denom)
+        if (resolved) {
+          tokens.value[i].symbol   = resolved.symbol
+          tokens.value[i].decimals = resolved.decimals
+        }
+        tokens.value[i].ibcResolved = true
+      })
+    )
+
+    // Real AMM prices -- only denoms with an actual pool against minf get one.
+    await Promise.allSettled(
+      tokens.value.map(async (tok, i) => {
+        if (tok.denom === 'minf') return
+        try {
+          tokens.value[i].priceInInf = await fetchPriceInInf(tok.denom, tok.decimals)
+        } catch {
+          tokens.value[i].priceInInf = null
+        } finally {
+          tokens.value[i].priceLoading = false
+        }
+      })
+    )
   } catch {
     loading.value = false
     error.value   = true
   }
+}
+
+function truncDenom(denom: string): string {
+  if (denom.length <= 24) return denom
+  return `${denom.slice(0, 14)}…${denom.slice(-6)}`
+}
+
+function fmtPrice(price: number): string {
+  if (price === 0) return '0 INF'
+  if (price >= 1) return `${price.toLocaleString(undefined, { maximumFractionDigits: 4 })} INF`
+  // small prices: show enough significant digits to be meaningful
+  return `${price.toPrecision(4)} INF`
 }
 
 let refreshTimer: ReturnType<typeof setInterval>
@@ -157,7 +209,7 @@ onUnmounted(() => clearInterval(refreshTimer))
                 <th>Token</th>
                 <th class="th-r">Total Supply</th>
                 <th class="th-r">Holders</th>
-                <th class="th-r">Price</th>
+                <th class="th-r">Price (in INF)</th>
                 <th class="th-r">Market Cap</th>
               </tr>
             </thead>
@@ -169,8 +221,11 @@ onUnmounted(() => clearInterval(refreshTimer))
                     <img v-if="tok.logo" :src="tok.logo" :alt="tok.symbol" class="tok-icon" />
                     <div v-else class="tok-icon tok-icon-generic">{{ tok.symbol[0] }}</div>
                     <div>
-                      <div class="tok-sym">{{ tok.symbol }}</div>
-                      <div class="tok-denom">{{ tok.denom }}</div>
+                      <div class="tok-sym">
+                        {{ tok.symbol }}
+                        <span v-if="tok.isIbc" class="ibc-tag">via IBC</span>
+                      </div>
+                      <div class="tok-denom" :title="tok.denom">{{ tok.isIbc ? truncDenom(tok.denom) : tok.denom }}</div>
                     </div>
                   </div>
                 </td>
@@ -180,7 +235,12 @@ onUnmounted(() => clearInterval(refreshTimer))
                   <span v-else-if="tok.holders !== null" class="mono">{{ tok.holders.toLocaleString() }}</span>
                   <span v-else class="muted">—</span>
                 </td>
-                <td class="td-r no-mkt">No market data</td>
+                <td class="td-r">
+                  <span v-if="tok.denom === 'minf'" class="no-mkt">No market data</span>
+                  <span v-else-if="tok.priceLoading || (tok.isIbc && !tok.ibcResolved)" class="loading-dot">…</span>
+                  <span v-else-if="tok.priceInInf !== null" class="mono price-val">{{ fmtPrice(tok.priceInInf) }}</span>
+                  <span v-else class="no-mkt">No market data</span>
+                </td>
                 <td class="td-r no-mkt">No market data</td>
               </tr>
               <tr v-if="tokens.length === 0">
@@ -275,8 +335,14 @@ onUnmounted(() => clearInterval(refreshTimer))
   display: flex; align-items: center; justify-content: center;
   background: #1e1e1e; color: #e8a500; font-size: 15px; font-weight: 700;
 }
-.tok-sym  { font-size: 14px; font-weight: 600; color: #f0f0f0; }
+.tok-sym  { font-size: 14px; font-weight: 600; color: #f0f0f0; display: flex; align-items: center; gap: 6px; }
 .tok-denom { font-size: 11px; color: #555; font-family: 'SF Mono', monospace; margin-top: 1px; }
+.ibc-tag {
+  font-size: 9px; font-weight: 600; color: #7dd3fc; background: rgba(125,211,252,0.10);
+  border: 1px solid rgba(125,211,252,0.3); border-radius: 4px; padding: 1px 6px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.price-val { color: #e8a500; font-weight: 600; }
 
 /* ── Cells ──────────────────────────────────────────────────────────────────── */
 .mono     { font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; }

@@ -15,6 +15,8 @@ import { detectWallets, connectWallet, type WalletId } from '@/utils/multiWallet
 import { executeSetMetadata } from '@/utils/executeSetMetadata'
 import { fetchTokenMetadata, CHAIN_ID, CHAIN_SUGGEST_CONFIG } from '@/config/tokenMetadataContract'
 import type { TokenMetadata } from '@/config/tokenMetadataContract'
+import { isIbcDenom, resolveIbcDenom } from '@/utils/ibcDenom'
+import { fetchPriceInInf, fetchImpliedInfPrice } from '@/config/ammContract'
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const baseStore = useBaseStore()
@@ -27,9 +29,64 @@ const CHAIN    = 'infiniteledgers'
 
 const denom    = computed(() => (props.denom as string) || 'minf')
 const asset    = computed<KnownAsset | null>(() => KNOWN_ASSETS[denom.value] ?? null)
-const symbol   = computed(() => asset.value?.symbol ?? denom.value.toUpperCase())
-const decimals = computed(() => asset.value?.decimals ?? 0)
+const isIbc    = computed(() => isIbcDenom(denom.value))
+
+// General IBC denom-trace resolution (see src/utils/ibcDenom.ts) -- not
+// specific to any one token. Starts as a clear placeholder, not the raw
+// hash, and is filled in once the lookup resolves.
+const ibcSymbol    = ref<string | null>(null)
+const ibcDecimals  = ref<number | null>(null)
+const ibcPath      = ref<string | null>(null)
+const ibcResolved  = ref(false)
+
+async function loadIbcInfo() {
+  if (!isIbc.value) { ibcResolved.value = true; return }
+  const resolved = await resolveIbcDenom(denom.value)
+  if (resolved) {
+    ibcSymbol.value   = resolved.symbol
+    ibcDecimals.value = resolved.decimals
+    ibcPath.value      = resolved.path
+  }
+  ibcResolved.value = true
+}
+
+const symbol   = computed(() => asset.value?.symbol ?? ibcSymbol.value ?? (isIbc.value ? 'IBC Token' : denom.value.toUpperCase()))
+const decimals = computed(() => asset.value?.decimals ?? ibcDecimals.value ?? 0)
 const logo     = computed(() => asset.value?.logo ?? null)
+
+// ── Real AMM price (in INF) -- only for denoms with an actual pool ──────────────
+const priceInInf    = ref<number | null>(null)
+const priceLoading  = ref(denom.value !== 'minf')
+
+async function loadPrice() {
+  if (denom.value === 'minf') return
+  priceLoading.value = true
+  try {
+    priceInInf.value = await fetchPriceInInf(denom.value, decimals.value)
+  } catch {
+    priceInInf.value = null
+  } finally {
+    priceLoading.value = false
+  }
+}
+
+// INF's own row has no self-price. The minf/ATOM pool is the closest thing
+// to a real external reference point for INF, so its detail page shows an
+// implied ATOM price as a clearly-labeled supplementary figure -- this one
+// pool pairing is a deliberate, disclosed exception, not the general
+// resolver above (there's no "list pools for a denom" query on the AMM
+// contract to discover this dynamically).
+const ATOM_IBC_DENOM = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+const impliedAtomPrice  = ref<number | null>(null)
+const impliedAtomSymbol = ref('ATOM')
+
+async function loadImpliedAtomPrice() {
+  if (denom.value !== 'minf') return
+  const resolved = await resolveIbcDenom(ATOM_IBC_DENOM)
+  const dec = resolved?.decimals ?? 6
+  impliedAtomSymbol.value = resolved?.symbol ?? 'ATOM'
+  impliedAtomPrice.value = await fetchImpliedInfPrice(ATOM_IBC_DENOM, dec)
+}
 
 // ── Creator / tokenfactory vs native ─────────────────────────────────────────────
 const isNativeDenom  = computed(() => denom.value === 'minf')
@@ -276,6 +333,12 @@ function relTime(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
+function fmtPriceValue(price: number): string {
+  if (price === 0) return '0'
+  if (price >= 1) return price.toLocaleString(undefined, { maximumFractionDigits: 4 })
+  return price.toPrecision(4)
+}
+
 function truncAddr(a: string): string {
   if (!a || a.length <= 20) return a
   return a.slice(0, 10) + '…' + a.slice(-6)
@@ -410,7 +473,11 @@ let slowTimer: ReturnType<typeof setInterval>
 let vestTimer: ReturnType<typeof setInterval>
 
 onMounted(async () => {
-  await Promise.all([fetchSupply(), fetchVesting(), fetchHolders(), fetchAllTxs(), loadMetadata()])
+  await loadIbcInfo() // must resolve first: price calc needs the real decimals
+  await Promise.all([
+    fetchSupply(), fetchVesting(), fetchHolders(), fetchAllTxs(), loadMetadata(),
+    loadPrice(), loadImpliedAtomPrice(),
+  ])
   fastTimer = setInterval(fetchAllTxs, 10000)
   slowTimer = setInterval(async () => {
     await Promise.all([fetchSupply(), fetchVesting(), fetchHolders()])
@@ -454,10 +521,15 @@ onUnmounted(() => {
           <div v-else class="tok-logo tok-logo-generic">{{ symbol[0] }}</div>
           <div>
             <h1 class="tok-name">{{ symbol }}</h1>
-            <div class="tok-sub">{{ asset?.name ?? 'Token' }} · <span class="mono">{{ denom }}</span></div>
+            <div class="tok-sub">
+              {{ asset?.name ?? (isIbc ? 'IBC-bridged token' : 'Token') }} ·
+              <span class="mono" :title="denom">{{ isIbc && denom.length > 28 ? denom.slice(0, 18) + '…' + denom.slice(-6) : denom }}</span>
+              <span v-if="isIbc && ibcPath" class="mono" style="color:#444;"> · via {{ ibcPath }}</span>
+            </div>
           </div>
           <div class="tok-badges">
             <span v-if="isNativeDenom" class="badge-green">Native</span>
+            <span v-else-if="isIbc" class="badge-blue">IBC</span>
             <span v-else class="badge-gold">Tokenfactory</span>
             <span class="badge-gold">Mainnet</span>
           </div>
@@ -477,9 +549,24 @@ onUnmounted(() => {
 
           <div class="mkt-grid">
             <div class="mkt-cell">
-              <div class="slabel">Price</div>
-              <div class="no-data">No market data</div>
-              <div class="no-data-note">{{ symbol }} has no exchange listing</div>
+              <div class="slabel">{{ isNativeDenom ? 'Price' : 'Price (in INF)' }}</div>
+              <template v-if="isNativeDenom">
+                <div v-if="impliedAtomPrice !== null" class="mkt-val" style="font-size:16px;">
+                  ≈ {{ fmtPriceValue(impliedAtomPrice) }} {{ impliedAtomSymbol }}
+                </div>
+                <div v-else class="no-data">No market data</div>
+                <div class="no-data-note">
+                  {{ impliedAtomPrice !== null ? `implied via the minf/${impliedAtomSymbol} AMM pool — not a direct feed` : 'No USD or external price feed exists on this chain' }}
+                </div>
+              </template>
+              <template v-else>
+                <div v-if="priceLoading || (isIbc && !ibcResolved)" class="no-data">Loading…</div>
+                <div v-else-if="priceInInf !== null" class="mkt-val" style="font-size:16px;">
+                  {{ fmtPriceValue(priceInInf) }} INF
+                </div>
+                <div v-else class="no-data">No market data</div>
+                <div class="no-data-note">{{ priceInInf !== null ? 'via the on-chain AMM pool' : `${symbol} has no AMM pool against minf` }}</div>
+              </template>
             </div>
             <div class="mkt-cell">
               <div class="slabel">Market Cap</div>
@@ -616,6 +703,9 @@ onUnmounted(() => {
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
           </button>
+        </div>
+        <div v-else-if="isIbc" class="no-data-sm" style="margin-bottom:14px;">
+          IBC-bridged token{{ ibcPath ? ` (${ibcPath})` : '' }} — no tokenfactory creator
         </div>
         <div v-else class="no-data-sm" style="margin-bottom:14px;">Unrecognized denom format</div>
 
@@ -947,6 +1037,7 @@ onUnmounted(() => {
 .tok-badges { display: flex; gap: 6px; margin-left: auto; }
 .badge-green { font-size: 11px; font-weight: 600; color: #4ade80; background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.3); border-radius: 4px; padding: 2px 8px; }
 .badge-gold  { font-size: 11px; font-weight: 600; color: #e8a500; background: rgba(232,165,0,0.10); border: 1px solid rgba(232,165,0,0.3); border-radius: 4px; padding: 2px 8px; }
+.badge-blue  { font-size: 11px; font-weight: 600; color: #7dd3fc; background: rgba(125,211,252,0.10); border: 1px solid rgba(125,211,252,0.3); border-radius: 4px; padding: 2px 8px; }
 
 /* ── Content ─────────────────────────────────────────────────────────────────── */
 .content { max-width: 1280px; margin: 0 auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px; }
