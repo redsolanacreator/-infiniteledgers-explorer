@@ -7,6 +7,7 @@ meta:
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
+import AppFooter from '@/components/inf/AppFooter.vue'
 import { useBaseStore } from '@/stores'
 import { KNOWN_ASSETS } from '@/config/knownAssets'
 import type { KnownAsset } from '@/config/knownAssets'
@@ -976,14 +977,7 @@ onUnmounted(() => {
 
     </div><!-- /content -->
 
-    <!-- ── Footer ──────────────────────────────────────────────────────────── -->
-    <footer class="footer">
-      <RouterLink to="/"                    class="fl fl-primary">Home</RouterLink>
-      <RouterLink :to="`/${CHAIN}`"         class="fl">Full Explorer</RouterLink>
-      <RouterLink :to="`/${CHAIN}/block`"   class="fl">Blocks</RouterLink>
-      <RouterLink :to="`/${CHAIN}/tx`"      class="fl">Transactions</RouterLink>
-      <RouterLink :to="`/${CHAIN}/staking`" class="fl">Validators</RouterLink>
-    </footer>
+    <AppFooter />
 
   </div>
 </template>
@@ -1168,12 +1162,6 @@ onUnmounted(() => {
 /* ── Empty state ─────────────────────────────────────────────────────────────── */
 .empty { padding: 32px; text-align: center; color: #444; font-size: 13px; }
 
-/* ── Footer ──────────────────────────────────────────────────────────────────── */
-.footer { border-top: 1px solid #161616; padding: 16px 24px; text-align: center; margin-top: 8px; }
-.fl { font-size: 12px; text-decoration: none; margin: 0 12px; color: #555; }
-.fl:hover { color: #e8a500; }
-.fl-primary { color: #e8a500; }
-
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .two-col { grid-template-columns: 1fr; }
@@ -1230,7 +1218,5 @@ onUnmounted(() => {
 .pg.theme-light .pagination { border-top-color: #e0e0e0; }
 .pg.theme-light .page-btn { background: #f5f5f5; border-color: #e0e0e0; color: #666; }
 .pg.theme-light .page-info { color: #888; }
-.pg.theme-light .footer { border-top-color: #e0e0e0; }
-.pg.theme-light .fl { color: #888; }
 .pg.theme-light .chart-stat-val { color: #333; }
 </style>

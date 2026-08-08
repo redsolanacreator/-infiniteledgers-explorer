@@ -7,6 +7,7 @@ meta:
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
+import AppFooter from '@/components/inf/AppFooter.vue'
 import { useBaseStore } from '@/stores'
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
@@ -589,13 +590,7 @@ onUnmounted(() => {
 
     </div><!-- /content -->
 
-    <!-- ── Footer ────────────────────────────────────────────────────────── -->
-    <footer class="footer">
-      <RouterLink :to="`/${CHAIN}`"         class="fl fl-primary">Full Explorer</RouterLink>
-      <RouterLink :to="`/${CHAIN}/block`"   class="fl">Blocks</RouterLink>
-      <RouterLink :to="`/${CHAIN}/tx`"      class="fl">Transactions</RouterLink>
-      <RouterLink :to="`/${CHAIN}/staking`" class="fl">Validators</RouterLink>
-    </footer>
+    <AppFooter />
 
   </div><!-- /pg -->
 </template>
@@ -777,12 +772,6 @@ onUnmounted(() => {
 .height-link:hover { text-decoration: underline; }
 .proposer-cell { font-family: 'SF Mono', monospace; font-size: 11px; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ── Footer ──────────────────────────────────────────────────────────────────── */
-.footer { border-top: 1px solid #161616; padding: 16px 24px; text-align: center; margin-top: 8px; }
-.fl { font-size: 12px; text-decoration: none; margin: 0 12px; color: #555; }
-.fl:hover { color: #e8a500; }
-.fl-primary { color: #e8a500; }
-
 .denom-item { font-size: 13px; color: #d0d0d0; font-family: monospace; padding: 3px 0; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
@@ -834,8 +823,6 @@ onUnmounted(() => {
 .pg.theme-light .blk-row { border-bottom-color: #f0f0f0; }
 .pg.theme-light .blk-row-alt { background: rgba(0,0,0,0.04); }
 .pg.theme-light .proposer-cell { color: #999; }
-.pg.theme-light .footer { border-top-color: #e0e0e0; }
-.pg.theme-light .fl { color: #888; }
 .pg.theme-light .denom-item { color: #444; }
 .pg.theme-light .reconnect-banner { background: #fff0f0; border-bottom-color: #fcc; }
 </style>

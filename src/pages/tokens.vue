@@ -7,6 +7,7 @@ meta:
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
+import AppFooter from '@/components/inf/AppFooter.vue'
 import { useBaseStore } from '@/stores'
 import { KNOWN_ASSETS, denomToSymbol } from '@/config/knownAssets'
 import { isIbcDenom, resolveIbcDenom } from '@/utils/ibcDenom'
@@ -257,14 +258,7 @@ onUnmounted(() => clearInterval(refreshTimer))
 
     </div><!-- /content -->
 
-    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
-    <footer class="footer">
-      <RouterLink to="/"                    class="fl fl-primary">Home</RouterLink>
-      <RouterLink :to="`/${CHAIN}`"         class="fl">Full Explorer</RouterLink>
-      <RouterLink :to="`/${CHAIN}/block`"   class="fl">Blocks</RouterLink>
-      <RouterLink :to="`/${CHAIN}/tx`"      class="fl">Transactions</RouterLink>
-      <RouterLink :to="`/${CHAIN}/staking`" class="fl">Validators</RouterLink>
-    </footer>
+    <AppFooter />
 
   </div>
 </template>
@@ -360,12 +354,6 @@ onUnmounted(() => clearInterval(refreshTimer))
 .state-msg { padding: 48px; text-align: center; color: #444; font-size: 14px; }
 .state-msg.err { color: #f87171; }
 
-/* ── Footer ─────────────────────────────────────────────────────────────────── */
-.footer { border-top: 1px solid #161616; padding: 16px 24px; text-align: center; margin-top: 8px; }
-.fl { font-size: 12px; text-decoration: none; margin: 0 12px; color: #555; }
-.fl:hover { color: #e8a500; }
-.fl-primary { color: #e8a500; }
-
 /* ── Light theme ────────────────────────────────────────────────────────────── */
 .pg.theme-light { background: #f5f7fa; color: #111111; }
 .pg.theme-light .navbar { background: rgba(255,255,255,0.97); border-bottom-color: #e0e0e0; }
@@ -392,6 +380,4 @@ onUnmounted(() => clearInterval(refreshTimer))
 .pg.theme-light .td-num { color: #aaa; }
 .pg.theme-light .table-footer { color: #bbb; border-top-color: #ebebeb; }
 .pg.theme-light .state-msg { color: #aaa; }
-.pg.theme-light .footer { border-top-color: #e0e0e0; }
-.pg.theme-light .fl { color: #888; }
 </style>
