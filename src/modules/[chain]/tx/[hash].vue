@@ -16,14 +16,14 @@ const format = useFormatter();
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const isLight = computed(() => baseStore.theme === 'light')
-const t0      = computed(() => isLight.value ? '#111111' : '#f0f0f0')
-const t1      = computed(() => isLight.value ? '#444444' : '#d0d0d0')
-const cardBg  = computed(() => isLight.value ? '#ffffff' : '#141414')
-const cardBd  = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
-const msgBg   = computed(() => isLight.value ? '#f8f8f8' : '#111111')
-const msgBd   = computed(() => isLight.value ? '#e8e8e8' : '#222222')
+const t0      = computed(() => isLight.value ? '#111111' : '#FFFFFF')
+const t1      = computed(() => isLight.value ? '#444444' : '#8E8E93')
+const cardBg  = computed(() => isLight.value ? '#ffffff' : '#1C1C1E')
+const cardBd  = computed(() => isLight.value ? '#e0e0e0' : '#2C2C2E')
+const msgBg   = computed(() => isLight.value ? '#f8f8f8' : '#000000')
+const msgBd   = computed(() => isLight.value ? '#e8e8e8' : '#2C2C2E')
 const rowAlt  = computed(() => isLight.value ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.18)')
-const rowBd   = computed(() => isLight.value ? '#f0f0f0' : '#1a1a1a')
+const rowBd   = computed(() => isLight.value ? '#f0f0f0' : '#2C2C2E')
 const tx = ref(
   {} as {
     tx: Tx;
@@ -138,7 +138,7 @@ function msgMeta(msg: any): MsgDisplay {
 
     <!-- ── Loading ──────────────────────────────────────────────────────────── -->
     <div v-if="!tx.tx_response"
-      style="display:flex;align-items:center;justify-content:center;padding:80px;color:#555;font-size:14px;">
+      style="display:flex;align-items:center;justify-content:center;padding:80px;color:#8E8E93;font-size:14px;">
       Loading transaction…
     </div>
 
@@ -151,28 +151,28 @@ function msgMeta(msg: any): MsgDisplay {
           <span :style="`
             display:inline-flex;align-items:center;gap:7px;
             padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
-            background:${tx.tx_response.code === 0 ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)'};
-            border:1px solid ${tx.tx_response.code === 0 ? 'rgba(74,222,128,0.35)' : 'rgba(248,113,113,0.35)'};
-            color:${tx.tx_response.code === 0 ? '#4ade80' : '#f87171'};
+            background:${tx.tx_response.code === 0 ? 'rgba(0,200,5,0.12)' : 'rgba(255,80,0,0.12)'};
+            border:1px solid ${tx.tx_response.code === 0 ? 'rgba(0,200,5,0.35)' : 'rgba(255,80,0,0.35)'};
+            color:${tx.tx_response.code === 0 ? '#00C805' : '#FF5000'};
           `">
-            <span :style="`width:7px;height:7px;border-radius:50%;background:${tx.tx_response.code === 0 ? '#4ade80' : '#f87171'};display:inline-block;`"></span>
+            <span :style="`width:7px;height:7px;border-radius:50%;background:${tx.tx_response.code === 0 ? '#00C805' : '#FF5000'};display:inline-block;`"></span>
             {{ tx.tx_response.code === 0 ? 'Success' : 'Failed' }}
           </span>
           <span v-if="tx.tx_response.code !== 0"
-            style="font-size:12px;color:#f87171;font-family:'SF Mono',monospace;word-break:break-all;">
+            style="font-size:12px;color:#FF5000;font-family:'SF Mono',monospace;word-break:break-all;">
             {{ tx.tx_response.raw_log }}
           </span>
         </div>
         <!-- Hash + copy -->
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0;">Tx Hash</span>
+          <span style="font-size:10px;color:#8E8E93;text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0;">Tx Hash</span>
           <span :style="{ fontFamily: '\'SF Mono\',monospace', fontSize: '13px', color: t1, wordBreak: 'break-all', flex: '1' }">
             {{ tx.tx_response.txhash }}
           </span>
           <button @click="copyHash()"
-            style="background:none;border:none;cursor:pointer;padding:3px;color:#555;display:flex;align-items:center;flex-shrink:0;"
+            style="background:none;border:none;cursor:pointer;padding:3px;color:#8E8E93;display:flex;align-items:center;flex-shrink:0;"
             :title="copied ? 'Copied!' : 'Copy hash'">
-            <span v-if="copied" style="font-size:13px;color:#4ade80;">✓</span>
+            <span v-if="copied" style="font-size:13px;color:#00C805;">✓</span>
             <svg v-else width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -198,7 +198,7 @@ function msgMeta(msg: any): MsgDisplay {
               <td class="label-cell">Timestamp</td>
               <td :style="{ color: t1 }">
                 {{ format.toLocaleDate(tx.tx_response.timestamp) }}
-                <span style="color:#555;margin-left:8px;font-size:12px;">
+                <span style="color:#8E8E93;margin-left:8px;font-size:12px;">
                   ({{ format.toDay(tx.tx_response.timestamp, 'from') }})
                 </span>
               </td>
@@ -211,19 +211,19 @@ function msgMeta(msg: any): MsgDisplay {
             </tr>
             <tr>
               <td class="label-cell">Gas Used / Wanted</td>
-              <td style="font-family:'SF Mono',monospace;color:#888;">
+              <td style="font-family:'SF Mono',monospace;color:#8E8E93;">
                 {{ Number(tx.tx_response.gas_used).toLocaleString() }}
                 /
                 {{ Number(tx.tx_response.gas_wanted).toLocaleString() }}
                 <span v-if="Number(tx.tx_response.gas_wanted) > 0"
-                  style="margin-left:8px;font-size:12px;color:#555;">
+                  style="margin-left:8px;font-size:12px;color:#8E8E93;">
                   ({{ ((Number(tx.tx_response.gas_used) / Number(tx.tx_response.gas_wanted)) * 100).toFixed(1) }}%)
                 </span>
               </td>
             </tr>
             <tr v-if="tx.tx?.body?.memo">
               <td class="label-cell">Memo</td>
-              <td style="color:#888;font-size:13px;">{{ tx.tx.body.memo }}</td>
+              <td style="color:#8E8E93;font-size:13px;">{{ tx.tx.body.memo }}</td>
             </tr>
           </tbody>
         </table>
@@ -233,10 +233,10 @@ function msgMeta(msg: any): MsgDisplay {
       <div class="inf-card" style="margin-bottom:16px;">
         <h3 class="inf-section-title" style="margin-bottom:16px;">
           Messages
-          <span style="font-weight:400;color:#444;margin-left:8px;">({{ messages.length }})</span>
+          <span style="font-weight:400;color:#8E8E93;margin-left:8px;">({{ messages.length }})</span>
         </h3>
 
-        <div v-if="!messages.length" style="color:#444;font-size:13px;text-align:center;padding:20px 0;">
+        <div v-if="!messages.length" style="color:#8E8E93;font-size:13px;text-align:center;padding:20px 0;">
           No messages
         </div>
 
@@ -247,14 +247,14 @@ function msgMeta(msg: any): MsgDisplay {
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
               <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
               <span :style="{ fontSize: '15px', fontWeight: '600', color: t0 }">{{ msgMeta(msg).label }}</span>
-              <span style="font-size:11px;color:#888;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <span style="font-size:11px;color:#8E8E93;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 {{ msg['@type'] }}
               </span>
             </div>
             <table style="width:100%;border-collapse:collapse;">
               <tbody>
                 <tr v-for="row in msgMeta(msg).rows" :key="row.key">
-                  <td style="padding:7px 0;font-size:12px;color:#888;width:140px;vertical-align:middle;white-space:nowrap;">
+                  <td style="padding:7px 0;font-size:12px;color:#8E8E93;width:140px;vertical-align:middle;white-space:nowrap;">
                     {{ row.key }}
                   </td>
                   <td style="padding:7px 0 7px 8px;font-size:13px;vertical-align:middle;word-break:break-all;">
@@ -278,7 +278,7 @@ function msgMeta(msg: any): MsgDisplay {
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
               <span style="font-size:20px;line-height:1;">{{ msgMeta(msg).icon }}</span>
               <span :style="{ fontSize: '15px', fontWeight: '600', color: t0 }">{{ msgMeta(msg).label }}</span>
-              <span style="font-size:11px;color:#888;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <span style="font-size:11px;color:#8E8E93;font-family:'SF Mono',monospace;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 {{ msg['@type'] }}
               </span>
             </div>
@@ -335,18 +335,18 @@ function msgMeta(msg: any): MsgDisplay {
 .label-cell {
   width: 180px !important;
   font-size: 12px !important;
-  color: #888 !important;
+  color: #8E8E93 !important;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .inf-section-title {
-  font-size: 12px; font-weight: 600; color: #888;
+  font-size: 12px; font-weight: 600; color: #8E8E93;
   text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
 }
 
 .inf-link {
-  color: #e8a500;
+  color: #00C805;
   text-decoration: none;
 }
 .inf-link:hover { text-decoration: underline; }
@@ -357,9 +357,9 @@ function msgMeta(msg: any): MsgDisplay {
   border-radius: 6px;
   padding: 16px 20px;
 }
-.msg-raw :deep(.grid) { color: #888; }
-.msg-raw :deep(.font-semibold) { color: #888; font-size: 12px; }
-.msg-raw :deep(a) { color: #e8a500 !important; }
-.msg-raw :deep(.text-primary) { color: #e8a500 !important; }
+.msg-raw :deep(.grid) { color: #8E8E93; }
+.msg-raw :deep(.font-semibold) { color: #8E8E93; font-size: 12px; }
+.msg-raw :deep(a) { color: #00C805 !important; }
+.msg-raw :deep(.text-primary) { color: #00C805 !important; }
 .msg-raw :deep(.dark\:invert) { filter: none !important; }
 </style>

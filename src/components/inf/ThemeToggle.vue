@@ -65,5 +65,5 @@ onMounted(() => {
   flex-shrink: 0;
   transition: opacity .15s, border-color .15s;
 }
-.tt-btn:hover { opacity: 1; border-color: #e8a500; }
+.tt-btn:hover { opacity: 1; border-color: #00C805; }
 </style>

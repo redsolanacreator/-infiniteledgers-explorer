@@ -178,8 +178,8 @@ function msgPill(msgType: string): PillInfo {
     'WithdrawDelegatorReward':     { label: 'Claim',       color: '#22c55e' },
     'Vote':                        { label: 'Vote',        color: '#14b8a6' },
     'VoteWeighted':                { label: 'Vote',        color: '#14b8a6' },
-    'CreateValidator':             { label: 'Create Val.', color: '#e8a500' },
-    'EditValidator':               { label: 'Edit Val.',   color: '#e8a500' },
+    'CreateValidator':             { label: 'Create Val.', color: '#00C805' },
+    'EditValidator':               { label: 'Edit Val.',   color: '#00C805' },
     'WithdrawValidatorCommission': { label: 'Commission',  color: '#22c55e' },
   }
   return map[msgType] ?? { label: msgType || 'Unknown', color: '#6b7280' }
@@ -347,7 +347,7 @@ onUnmounted(() => {
 
     <!-- ── Reconnect banner ──────────────────────────────────────────────── -->
     <div v-if="reconnecting" class="reconnect-banner">
-      <span style="width:7px;height:7px;border-radius:50%;background:#f87171;display:inline-block;animation:inf-pulse 1.4s ease-in-out infinite;flex-shrink:0;"></span>
+      <span style="width:7px;height:7px;border-radius:50%;background:#FF5000;display:inline-block;animation:inf-pulse 1.4s ease-in-out infinite;flex-shrink:0;"></span>
       Reconnecting to {{ chainId }}… API may be temporarily unreachable.
     </div>
 
@@ -444,7 +444,7 @@ onUnmounted(() => {
             <span class="slabel">Locked</span>
             <span class="leg-val">{{ fmtINF(unvestedMinf) }} INF&nbsp;({{ nonCircPct }}%)</span>
           </div>
-          <div style="font-size:11px;color:#444;margin-top:4px;">
+          <div style="font-size:11px;color:#8E8E93;margin-top:4px;">
             Locked = founder vesting · linear release Aug 2026 → 2046
           </div>
 
@@ -466,7 +466,7 @@ onUnmounted(() => {
 
           <!-- Other tokens section -->
           <div class="slabel" style="margin-bottom:8px;">Tokens on this chain</div>
-          <div v-if="allDenoms.length <= 1" style="font-size:13px;color:#666;">
+          <div v-if="allDenoms.length <= 1" style="font-size:13px;color:#8E8E93;">
             1 native token (INF / minf) · No additional tokens issued
           </div>
           <div v-else>
@@ -535,7 +535,7 @@ onUnmounted(() => {
             </div>
             <div class="sitem">
               <div class="slabel">Jailed</div>
-              <div class="sval" :style="jailedCount > 0 ? 'color:#f87171' : ''">{{ jailedCount }}</div>
+              <div class="sval" :style="jailedCount > 0 ? 'color:#FF5000' : ''">{{ jailedCount }}</div>
             </div>
             <div class="sitem">
               <div class="slabel">Total Stake</div>
@@ -553,7 +553,7 @@ onUnmounted(() => {
 
           <!-- Emission progress mini -->
           <div class="chead" style="margin-bottom:10px;"><span class="ctitle">Emission · Era {{ currentEra }}</span></div>
-          <div style="font-size:12px;color:#888;margin-bottom:6px;">
+          <div style="font-size:12px;color:#8E8E93;margin-bottom:6px;">
             {{ fmtRewardINF(blockRewardMinf) }} INF/block →
             {{ fmtRewardINF(blockRewardMinf >>> 1) }} INF after next halving
           </div>
@@ -607,7 +607,7 @@ onUnmounted(() => {
                 {{ msgPill(tx.msgType).label }}
               </span>
             </span>
-            <span :style="`font-size:14px;text-align:right;color:${tx.success ? '#4ade80' : '#f87171'}`">
+            <span :style="`font-size:14px;text-align:right;color:${tx.success ? '#00C805' : '#FF5000'}`">
               {{ tx.success ? '✓' : '✗' }}
             </span>
           </div>
@@ -638,7 +638,7 @@ onUnmounted(() => {
               #{{ Number(bl.height).toLocaleString() }}
             </RouterLink>
             <span class="age">{{ relTime(bl.time) }}</span>
-            <span :style="`font-family:monospace;font-size:12px;color:${bl.numTxs > 0 ? '#4ade80' : '#444'}`">
+            <span :style="`font-family:monospace;font-size:12px;color:${bl.numTxs > 0 ? '#00C805' : '#8E8E93'}`">
               {{ bl.numTxs }}
             </span>
             <span class="proposer-cell">
@@ -666,21 +666,21 @@ onUnmounted(() => {
 /* ── Page shell ─────────────────────────────────────────────────────────────── */
 .pg {
   min-height: 100vh;
-  background: #0d0d0d;
-  color: #f0f0f0;
+  background: #000000;
+  color: #FFFFFF;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* ── Reconnect banner ────────────────────────────────────────────────────────── */
 .reconnect-banner {
   background: #160808; border-bottom: 1px solid #4a1515;
-  padding: 7px 24px; font-size: 12px; color: #f87171;
+  padding: 7px 24px; font-size: 12px; color: #FF5000;
   display: flex; align-items: center; gap: 8px;
 }
 
 /* ── Navbar ──────────────────────────────────────────────────────────────────── */
 .navbar {
-  background: rgba(13,13,13,0.97); border-bottom: 1px solid #1a1a1a;
+  background: rgba(0,0,0,0.97); border-bottom: 1px solid #2C2C2E;
   backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 50;
 }
 .nav-inner {
@@ -689,39 +689,39 @@ onUnmounted(() => {
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand-logo { width: 30px; height: 30px; border-radius: 50%; }
-.brand-name { font-size: 16px; font-weight: 700; color: #f0f0f0; letter-spacing: -0.02em; }
+.brand-name { font-size: 16px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; }
 .nav-right { display: flex; align-items: center; gap: 10px; }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-.dot-ok  { background: #4ade80; animation: inf-pulse 2.5s ease-in-out infinite; }
-.dot-err { background: #f87171; }
-.chain-id-label { font-size: 12px; color: #555; font-family: 'SF Mono', monospace; }
+.dot-ok  { background: #00C805; animation: inf-pulse 2.5s ease-in-out infinite; }
+.dot-err { background: #FF5000; }
+.chain-id-label { font-size: 12px; color: #8E8E93; font-family: 'SF Mono', monospace; }
 .explorer-btn {
-  font-size: 12px; color: #e8a500;
-  border: 1px solid rgba(232,165,0,0.3); border-radius: 4px;
+  font-size: 12px; color: #00C805;
+  border: 1px solid rgba(0,200,5,0.3); border-radius: 4px;
   padding: 4px 10px; text-decoration: none; transition: border-color .15s;
 }
-.explorer-btn:hover { border-color: #e8a500; }
+.explorer-btn:hover { border-color: #00C805; }
 
 /* ── Hero ────────────────────────────────────────────────────────────────────── */
 .hero {
   background:
-    radial-gradient(ellipse 90% 70% at 50% -5%, rgba(232,165,0,0.14) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 50% at 85% 120%, rgba(232,165,0,0.05) 0%, transparent 60%),
-    #0d0d0d;
-  border-bottom: 1px solid #1e1e1e;
+    radial-gradient(ellipse 90% 70% at 50% -5%, rgba(0,200,5,0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 85% 120%, rgba(0,200,5,0.05) 0%, transparent 60%),
+    #000000;
+  border-bottom: 1px solid #2C2C2E;
   padding: 52px 24px 36px;
 }
 .hero-inner    { max-width: 680px; margin: 0 auto; text-align: center; }
-.hero-title    { font-size: 34px; font-weight: 800; color: #f0f0f0; letter-spacing: -0.03em; margin: 0 0 8px; }
-.hero-sub      { font-size: 13px; color: #555; margin: 0 0 24px; }
+.hero-title    { font-size: 34px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em; margin: 0 0 8px; }
+.hero-sub      { font-size: 13px; color: #8E8E93; margin: 0 0 24px; }
 .hero-search-wrap { margin-bottom: 20px; }
 
 .ticker {
   display: flex; align-items: center; justify-content: center;
   flex-wrap: wrap; gap: 5px; font-size: 12px;
 }
-.tick     { color: #666; }
-.tick-sep { color: #2d2d2d; }
+.tick     { color: #8E8E93; }
+.tick-sep { color: #2C2C2E; }
 
 /* ── Layout ──────────────────────────────────────────────────────────────────── */
 .content  { max-width: 1280px; margin: 0 auto; padding: 24px 24px; display: flex; flex-direction: column; gap: 18px; }
@@ -729,7 +729,7 @@ onUnmounted(() => {
 
 /* ── Card ────────────────────────────────────────────────────────────────────── */
 .card {
-  background: #141414; border: 1px solid #2d2d2d; border-radius: 10px;
+  background: #1C1C1E; border: 1px solid #2C2C2E; border-radius: 10px;
   padding: 20px 24px;
 }
 .chead { display: flex; align-items: center; margin-bottom: 14px; }
@@ -741,65 +741,65 @@ onUnmounted(() => {
   transition: background .15s;
   cursor: pointer;
 }
-.chead-link:hover { background: rgba(232,165,0,0.07); }
-.chead-link:hover .ctitle { color: #e8a500; }
-.pg.theme-light .chead-link:hover { background: rgba(232,165,0,0.08); }
-.ctitle { font-size: 14px; font-weight: 700; color: #f0f0f0; }
+.chead-link:hover { background: rgba(0,200,5,0.07); }
+.chead-link:hover .ctitle { color: #00C805; }
+.pg.theme-light .chead-link:hover { background: rgba(0,200,5,0.08); }
+.ctitle { font-size: 14px; font-weight: 700; color: #FFFFFF; }
 .badge-native {
   margin-left: 8px; font-size: 10px; font-weight: 600;
-  color: #e8a500; background: rgba(232,165,0,0.10);
-  border: 1px solid rgba(232,165,0,0.3); border-radius: 4px;
+  color: #00C805; background: rgba(0,200,5,0.10);
+  border: 1px solid rgba(0,200,5,0.3); border-radius: 4px;
   padding: 1px 6px; text-transform: uppercase; letter-spacing: 0.05em;
 }
 .live-badge { margin-left: auto; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 7px; letter-spacing: 0.06em; }
-.lb-ok  { color: #4ade80; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); }
-.lb-err { color: #f87171; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); }
-.divider { height: 1px; background: #1e1e1e; margin: 14px 0; }
+.lb-ok  { color: #00C805; background: rgba(0,200,5,0.1); border: 1px solid rgba(0,200,5,0.3); }
+.lb-err { color: #FF5000; background: rgba(255,80,0,0.1); border: 1px solid rgba(255,80,0,0.3); }
+.divider { height: 1px; background: #2C2C2E; margin: 14px 0; }
 
 /* ── Labels / values ─────────────────────────────────────────────────────────── */
-.slabel { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-.sval   { font-size: 20px; font-weight: 600; color: #f0f0f0; }
-.sval-link { font-size: 20px; font-weight: 600; color: #e8a500; text-decoration: none; }
+.slabel { font-size: 11px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.sval   { font-size: 20px; font-weight: 600; color: #FFFFFF; }
+.sval-link { font-size: 20px; font-weight: 600; color: #00C805; text-decoration: none; }
 .sval-link:hover { text-decoration: underline; }
-.no-data    { font-size: 15px; color: #555; font-style: italic; }
-.no-data-sm { font-size: 13px; color: #555; font-style: italic; }
-.mkt-price  { font-size: 20px; font-weight: 700; color: #f0f0f0; }
-.mkt-fdv    { font-size: 15px; font-weight: 600; color: #f0f0f0; }
-.liq-warn   { font-size: 11px; color: #e8a500; margin-top: 3px; }
+.no-data    { font-size: 15px; color: #8E8E93; font-style: italic; }
+.no-data-sm { font-size: 13px; color: #8E8E93; font-style: italic; }
+.mkt-price  { font-size: 20px; font-weight: 700; color: #FFFFFF; }
+.mkt-fdv    { font-size: 15px; font-weight: 600; color: #FFFFFF; }
+.liq-warn   { font-size: 11px; color: #00C805; margin-top: 3px; }
 
 /* Market row */
 .mkt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
 
 /* Supply */
-.supply-total { font-size: 24px; font-weight: 700; color: #f0f0f0; }
-.bar-track { height: 7px; background: rgba(232,165,0,0.10); border: 1px solid rgba(232,165,0,0.15); border-radius: 4px; overflow: hidden; }
-.bar-fill  { height: 100%; background: linear-gradient(90deg, #9a6d00, #e8a500); border-radius: 4px; transition: width .6s ease; }
+.supply-total { font-size: 24px; font-weight: 700; color: #FFFFFF; }
+.bar-track { height: 7px; background: rgba(0,200,5,0.10); border: 1px solid rgba(0,200,5,0.15); border-radius: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; background: linear-gradient(90deg, #007A03, #00C805); border-radius: 4px; transition: width .6s ease; }
 .legend-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 11px; margin-top: 7px; }
 .leg-dot    { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-.leg-circ   { background: #e8a500; }
-.leg-lock   { background: rgba(232,165,0,0.15); border: 1px solid rgba(232,165,0,0.35); }
-.leg-val    { color: #c0c0c0; font-weight: 500; margin-right: 4px; }
+.leg-circ   { background: #00C805; }
+.leg-lock   { background: rgba(0,200,5,0.15); border: 1px solid rgba(0,200,5,0.35); }
+.leg-val    { color: #8E8E93; font-weight: 500; margin-right: 4px; }
 .token-detail-link {
-  display: inline-block; font-size: 12px; color: #e8a500;
-  text-decoration: none; border: 1px solid rgba(232,165,0,0.3);
+  display: inline-block; font-size: 12px; color: #00C805;
+  text-decoration: none; border: 1px solid rgba(0,200,5,0.3);
   border-radius: 4px; padding: 5px 12px;
   transition: border-color .15s, background .15s;
 }
-.token-detail-link:hover { border-color: #e8a500; background: rgba(232,165,0,0.06); }
+.token-detail-link:hover { border-color: #00C805; background: rgba(0,200,5,0.06); }
 
 /* Stat grid */
 .stat4  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .sitem  { }
 
 /* Emission labels */
-.era-labels { display: flex; justify-content: space-between; font-size: 11px; color: #444; margin-top: 5px; }
+.era-labels { display: flex; justify-content: space-between; font-size: 11px; color: #8E8E93; margin-top: 5px; }
 
 /* ── Section heads ───────────────────────────────────────────────────────────── */
 .card-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.section-label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin: 0; }
-.view-all { font-size: 12px; color: #e8a500; text-decoration: none; }
+.section-label { font-size: 11px; font-weight: 700; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.08em; margin: 0; }
+.view-all { font-size: 12px; color: #00C805; text-decoration: none; }
 .view-all:hover { text-decoration: underline; }
-.empty { padding: 28px; text-align: center; color: #444; font-size: 13px; }
+.empty { padding: 28px; text-align: center; color: #8E8E93; font-size: 13px; }
 
 /* ── Tx table ────────────────────────────────────────────────────────────────── */
 .tx-head, .tx-row {
@@ -807,17 +807,17 @@ onUnmounted(() => {
   grid-template-columns: 150px 90px 80px 1fr 24px;
   gap: 10px; align-items: center; padding: 7px 0;
 }
-.tx-head { border-bottom: 1px solid #1e1e1e; padding-bottom: 6px; }
-.tx-head > span { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
-.tx-row  { border-bottom: 1px solid #111; }
+.tx-head { border-bottom: 1px solid #2C2C2E; padding-bottom: 6px; }
+.tx-head > span { font-size: 10px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.06em; }
+.tx-row  { border-bottom: 1px solid #2C2C2E; }
 .tx-row:last-child { border-bottom: none; }
 .tx-row:hover { background: rgba(255,255,255,0.02); border-radius: 4px; }
 .tx-hash-wrap { overflow: hidden; }
-.hash-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #e8a500; text-decoration: none; }
+.hash-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #00C805; text-decoration: none; }
 .hash-link:hover { text-decoration: underline; }
-.blk-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #888; text-decoration: none; }
-.blk-link:hover { color: #e8a500; }
-.age { font-size: 12px; color: #555; white-space: nowrap; }
+.blk-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #8E8E93; text-decoration: none; }
+.blk-link:hover { color: #00C805; }
+.age { font-size: 12px; color: #8E8E93; white-space: nowrap; }
 .pill { font-size: 10px; font-weight: 600; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
 
 /* ── Block table ─────────────────────────────────────────────────────────────── */
@@ -826,16 +826,16 @@ onUnmounted(() => {
   grid-template-columns: 110px 80px 48px 1fr;
   gap: 10px; align-items: center; padding: 7px 0;
 }
-.blk-head { border-bottom: 1px solid #1e1e1e; padding-bottom: 6px; }
-.blk-head > span { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
-.blk-row { border-bottom: 1px solid #111; }
+.blk-head { border-bottom: 1px solid #2C2C2E; padding-bottom: 6px; }
+.blk-head > span { font-size: 10px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.06em; }
+.blk-row { border-bottom: 1px solid #2C2C2E; }
 .blk-row-alt { background: rgba(0,0,0,0.15); }
 .blk-row:last-child { border-bottom: none; }
-.height-link { font-family: 'SF Mono', monospace; font-size: 13px; font-weight: 600; color: #e8a500; text-decoration: none; }
+.height-link { font-family: 'SF Mono', monospace; font-size: 13px; font-weight: 600; color: #00C805; text-decoration: none; }
 .height-link:hover { text-decoration: underline; }
-.proposer-cell { font-family: 'SF Mono', monospace; font-size: 11px; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proposer-cell { font-family: 'SF Mono', monospace; font-size: 11px; color: #8E8E93; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.denom-item { font-size: 13px; color: #d0d0d0; font-family: monospace; padding: 3px 0; }
+.denom-item { font-size: 13px; color: #8E8E93; font-family: monospace; padding: 3px 0; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 800px) {
@@ -854,8 +854,8 @@ onUnmounted(() => {
 .pg.theme-light .chain-id-label { color: #888; }
 .pg.theme-light .hero {
   background:
-    radial-gradient(ellipse 90% 70% at 50% -5%, rgba(232,165,0,0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 50% at 85% 120%, rgba(232,165,0,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% -5%, rgba(0,200,5,0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 85% 120%, rgba(0,200,5,0.04) 0%, transparent 60%),
     #f5f7fa;
   border-bottom-color: #e0e0e0;
 }

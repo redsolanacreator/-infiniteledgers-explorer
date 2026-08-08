@@ -366,8 +366,8 @@ function msgPill(msgType: string): PillInfo {
     'WithdrawDelegatorReward':     { label: 'Claim',       color: '#22c55e' },
     'Vote':                        { label: 'Vote',        color: '#14b8a6' },
     'VoteWeighted':                { label: 'Vote',        color: '#14b8a6' },
-    'CreateValidator':             { label: 'Create Val.', color: '#e8a500' },
-    'EditValidator':               { label: 'Edit Val.',   color: '#e8a500' },
+    'CreateValidator':             { label: 'Create Val.', color: '#00C805' },
+    'EditValidator':               { label: 'Edit Val.',   color: '#00C805' },
     'WithdrawValidatorCommission': { label: 'Commission',  color: '#22c55e' },
   }
   return map[msgType] ?? { label: msgType || 'Unknown', color: '#6b7280' }
@@ -525,7 +525,7 @@ onUnmounted(() => {
             <div class="tok-sub">
               {{ asset?.name ?? (isIbc ? 'IBC-bridged token' : 'Token') }} ·
               <span class="mono" :title="denom">{{ isIbc && denom.length > 28 ? denom.slice(0, 18) + '…' + denom.slice(-6) : denom }}</span>
-              <span v-if="isIbc && ibcPath" class="mono" style="color:#444;"> · via {{ ibcPath }}</span>
+              <span v-if="isIbc && ibcPath" class="mono" style="color:#8E8E93;"> · via {{ ibcPath }}</span>
             </div>
           </div>
           <div class="tok-badges">
@@ -620,7 +620,7 @@ onUnmounted(() => {
               <span class="leg-val">{{ fmtAmt(unvested) }} {{ symbol }}</span>
             </template>
           </div>
-          <div v-if="asset?.vestingAddr && asset?.vestingNote" style="font-size:11px;color:#444;margin-top:4px;">
+          <div v-if="asset?.vestingAddr && asset?.vestingNote" style="font-size:11px;color:#8E8E93;margin-top:4px;">
             {{ asset.vestingNote }}
           </div>
         </div><!-- /market overview -->
@@ -629,9 +629,9 @@ onUnmounted(() => {
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <h3 class="ctitle">Transaction Activity</h3>
-            <span style="font-size:11px;color:#444;">Last 14 days</span>
+            <span style="font-size:11px;color:#8E8E93;">Last 14 days</span>
           </div>
-          <div style="font-size:11px;color:#555;margin-bottom:16px;">
+          <div style="font-size:11px;color:#8E8E93;margin-bottom:16px;">
             Price chart unavailable — no market exists for {{ symbol }}.
             Showing on-chain transaction count instead.
           </div>
@@ -640,15 +640,15 @@ onUnmounted(() => {
           <div style="position:relative;">
             <svg viewBox="0 0 420 80" preserveAspectRatio="none" style="width:100%;height:80px;overflow:visible;">
               <!-- Grid lines -->
-              <line x1="0" y1="60" x2="420" y2="60" stroke="#1e1e1e" stroke-width="1"/>
-              <line x1="0" y1="35" x2="420" y2="35" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="3,3"/>
+              <line x1="0" y1="60" x2="420" y2="60" stroke="#2C2C2E" stroke-width="1"/>
+              <line x1="0" y1="35" x2="420" y2="35" stroke="#2C2C2E" stroke-width="1" stroke-dasharray="3,3"/>
 
               <!-- Bars -->
               <g v-for="(bar, i) in chartBars" :key="i">
                 <rect
                   :x="bar.x" :y="bar.h > 0 ? bar.y : 59"
                   :width="bar.w" :height="bar.h > 0 ? bar.h : 1"
-                  :fill="bar.count > 0 ? '#e8a500' : '#1e1e1e'"
+                  :fill="bar.count > 0 ? '#00C805' : '#2C2C2E'"
                   rx="2"
                 />
                 <!-- Label on every 3rd bar to avoid crowding -->
@@ -656,7 +656,7 @@ onUnmounted(() => {
                   :x="bar.lx" y="76"
                   text-anchor="middle"
                   font-size="7.5"
-                  fill="#444">{{ bar.label }}</text>
+                  fill="#8E8E93">{{ bar.label }}</text>
               </g>
 
               <!-- No activity message -->
@@ -664,12 +664,12 @@ onUnmounted(() => {
                 x="210" y="35"
                 text-anchor="middle"
                 font-size="11"
-                fill="#444">No transaction activity yet</text>
+                fill="#8E8E93">No transaction activity yet</text>
             </svg>
           </div>
 
           <!-- Peak info -->
-          <div v-if="allTxs.length > 0" style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#444;">
+          <div v-if="allTxs.length > 0" style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#8E8E93;">
             <span>Total txs: <span class="chart-stat-val">{{ allTxs.length.toLocaleString() }}</span></span>
             <span>Peak day: <span class="chart-stat-val">{{ Math.max(...chartDays.map(d=>d.count)) }} txs</span></span>
           </div>
@@ -695,10 +695,10 @@ onUnmounted(() => {
           </RouterLink>
           <button
             @click="copyAddr(creatorAddress)"
-            style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;color:#555;vertical-align:middle;"
+            style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;color:#8E8E93;vertical-align:middle;"
             :title="copiedAddr === creatorAddress ? 'Copied!' : 'Copy'"
           >
-            <span v-if="copiedAddr === creatorAddress" style="color:#4ade80;font-size:12px;">✓</span>
+            <span v-if="copiedAddr === creatorAddress" style="color:#00C805;font-size:12px;">✓</span>
             <svg v-else width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
@@ -858,7 +858,7 @@ onUnmounted(() => {
                 <span v-else class="muted">—</span>
               </span>
               <span class="amount-cell">{{ tx.amount }}</span>
-              <span :style="`font-size:13px;text-align:right;color:${tx.success ? '#4ade80' : '#f87171'}`">
+              <span :style="`font-size:13px;text-align:right;color:${tx.success ? '#00C805' : '#FF5000'}`">
                 {{ tx.success ? '✓' : '✗' }}
               </span>
             </div>
@@ -877,7 +877,7 @@ onUnmounted(() => {
           <!-- Activities = all message types. On this chain, all txs are MsgSend,
                so this tab shows the same data as Transfers. If other message types
                appear (delegate, vote, etc.) they will show here but not in Transfers. -->
-          <div style="font-size:11px;color:#444;padding:6px 0 10px;border-bottom:1px solid #1e1e1e;margin-bottom:10px;">
+          <div style="font-size:11px;color:#8E8E93;padding:6px 0 10px;border-bottom:1px solid #2C2C2E;margin-bottom:10px;">
             All on-chain message types · Currently identical to Transfers (all activity is MsgSend)
           </div>
 
@@ -918,7 +918,7 @@ onUnmounted(() => {
                 <span v-else class="muted">—</span>
               </span>
               <span class="amount-cell">{{ tx.amount }}</span>
-              <span :style="`font-size:13px;text-align:right;color:${tx.success ? '#4ade80' : '#f87171'}`">
+              <span :style="`font-size:13px;text-align:right;color:${tx.success ? '#00C805' : '#FF5000'}`">
                 {{ tx.success ? '✓' : '✗' }}
               </span>
             </div>
@@ -948,9 +948,9 @@ onUnmounted(() => {
                   {{ truncAddr(h.address) }}
                 </RouterLink>
                 <button @click="copyAddr(h.address)"
-                  style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;color:#555;vertical-align:middle;"
+                  style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;color:#8E8E93;vertical-align:middle;"
                   :title="copiedAddr === h.address ? 'Copied!' : 'Copy'">
-                  <span v-if="copiedAddr === h.address" style="color:#4ade80;font-size:12px;">✓</span>
+                  <span v-if="copiedAddr === h.address" style="color:#00C805;font-size:12px;">✓</span>
                   <svg v-else width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -960,7 +960,7 @@ onUnmounted(() => {
               <span class="h-balance">
                 {{ fmtAmt(h.balance) }} {{ symbol }}
               </span>
-              <span style="font-family:'SF Mono',monospace;font-size:13px;color:#888;text-align:right;">
+              <span style="font-family:'SF Mono',monospace;font-size:13px;color:#8E8E93;text-align:right;">
                 {{ totalSupply > 0n ? (Number(h.balance * 10000n / totalSupply) / 100).toFixed(3) + '%' : '—' }}
               </span>
             </div>
@@ -993,14 +993,14 @@ onUnmounted(() => {
 /* ── Page ────────────────────────────────────────────────────────────────────── */
 .pg {
   min-height: 100vh;
-  background: #0d0d0d;
-  color: #f0f0f0;
+  background: #000000;
+  color: #FFFFFF;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* ── Navbar ──────────────────────────────────────────────────────────────────── */
 .navbar {
-  background: rgba(13,13,13,0.97); border-bottom: 1px solid #1a1a1a;
+  background: rgba(0,0,0,0.97); border-bottom: 1px solid #2C2C2E;
   backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 50;
 }
 .nav-inner {
@@ -1009,28 +1009,28 @@ onUnmounted(() => {
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
 .brand-logo { width: 28px; height: 28px; border-radius: 50%; }
-.brand-name { font-size: 15px; font-weight: 700; color: #f0f0f0; letter-spacing: -0.02em; }
+.brand-name { font-size: 15px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; }
 .search-wrap { flex: 1; max-width: 420px; }
 .nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
-.nav-btn { font-size: 12px; color: #888; border: 1px solid #2d2d2d; border-radius: 4px; padding: 4px 10px; text-decoration: none; transition: border-color .15s, color .15s; }
-.nav-btn:hover { color: #e8a500; border-color: rgba(232,165,0,0.4); }
+.nav-btn { font-size: 12px; color: #8E8E93; border: 1px solid #2C2C2E; border-radius: 4px; padding: 4px 10px; text-decoration: none; transition: border-color .15s, color .15s; }
+.nav-btn:hover { color: #00C805; border-color: rgba(0,200,5,0.4); }
 
 /* ── Token header ────────────────────────────────────────────────────────────── */
 .token-header {
-  border-bottom: 1px solid #1e1e1e;
-  background: radial-gradient(ellipse 70% 80% at 50% -20%, rgba(232,165,0,0.10) 0%, transparent 60%), #0d0d0d;
+  border-bottom: 1px solid #2C2C2E;
+  background: radial-gradient(ellipse 70% 80% at 50% -20%, rgba(0,200,5,0.10) 0%, transparent 60%), #000000;
   padding: 28px 0 20px;
 }
 .th-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
 .th-title-row { display: flex; align-items: center; gap: 16px; }
-.tok-logo { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #2d2d2d; }
-.tok-logo-generic { display:flex;align-items:center;justify-content:center;background:#1e1e1e;color:#e8a500;font-size:18px;font-weight:700;flex-shrink:0; }
-.tok-name { font-size: 28px; font-weight: 800; color: #f0f0f0; margin: 0; letter-spacing: -0.02em; }
-.tok-sub { font-size: 13px; color: #555; margin-top: 2px; }
-.mono { font-family: 'SF Mono', monospace; font-size: 12px; color: #666; }
+.tok-logo { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #2C2C2E; }
+.tok-logo-generic { display:flex;align-items:center;justify-content:center;background:#2C2C2E;color:#00C805;font-size:18px;font-weight:700;flex-shrink:0; }
+.tok-name { font-size: 28px; font-weight: 800; color: #FFFFFF; margin: 0; letter-spacing: -0.02em; }
+.tok-sub { font-size: 13px; color: #8E8E93; margin-top: 2px; }
+.mono { font-family: 'SF Mono', monospace; font-size: 12px; color: #8E8E93; }
 .tok-badges { display: flex; gap: 6px; margin-left: auto; }
-.badge-green { font-size: 11px; font-weight: 600; color: #4ade80; background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.3); border-radius: 4px; padding: 2px 8px; }
-.badge-gold  { font-size: 11px; font-weight: 600; color: #e8a500; background: rgba(232,165,0,0.10); border: 1px solid rgba(232,165,0,0.3); border-radius: 4px; padding: 2px 8px; }
+.badge-green { font-size: 11px; font-weight: 600; color: #00C805; background: rgba(0,200,5,0.10); border: 1px solid rgba(0,200,5,0.3); border-radius: 4px; padding: 2px 8px; }
+.badge-gold  { font-size: 11px; font-weight: 600; color: #00C805; background: rgba(0,200,5,0.10); border: 1px solid rgba(0,200,5,0.3); border-radius: 4px; padding: 2px 8px; }
 .badge-blue  { font-size: 11px; font-weight: 600; color: #7dd3fc; background: rgba(125,211,252,0.10); border: 1px solid rgba(125,211,252,0.3); border-radius: 4px; padding: 2px 8px; }
 
 /* ── Content ─────────────────────────────────────────────────────────────────── */
@@ -1039,75 +1039,75 @@ onUnmounted(() => {
 
 /* ── Card ────────────────────────────────────────────────────────────────────── */
 .card {
-  background: #141414; border: 1px solid #2d2d2d; border-radius: 10px;
+  background: #1C1C1E; border: 1px solid #2C2C2E; border-radius: 10px;
   padding: 20px 24px;
 }
-.ctitle { font-size: 14px; font-weight: 700; color: #f0f0f0; margin: 0; }
-.slabel { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-.divider { height: 1px; background: #1e1e1e; margin: 14px 0; }
+.ctitle { font-size: 14px; font-weight: 700; color: #FFFFFF; margin: 0; }
+.slabel { font-size: 11px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.divider { height: 1px; background: #2C2C2E; margin: 14px 0; }
 
 /* ── Market grid ─────────────────────────────────────────────────────────────── */
 .mkt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .mkt-cell { }
-.mkt-val { font-size: 20px; font-weight: 700; color: #f0f0f0; }
-.mkt-val-sub { font-size: 11px; color: #555; margin-top: 2px; }
-.no-data { font-size: 15px; color: #555; font-style: italic; }
-.no-data-note { font-size: 11px; color: #333; margin-top: 2px; }
-.no-data-sm { font-size: 13px; color: #555; font-style: italic; }
+.mkt-val { font-size: 20px; font-weight: 700; color: #FFFFFF; }
+.mkt-val-sub { font-size: 11px; color: #8E8E93; margin-top: 2px; }
+.no-data { font-size: 15px; color: #8E8E93; font-style: italic; }
+.no-data-note { font-size: 11px; color: #8E8E93; margin-top: 2px; }
+.no-data-sm { font-size: 13px; color: #8E8E93; font-style: italic; }
 
 /* Token Info: metadata + edit flow */
 .meta-grid { display: flex; gap: 14px; align-items: flex-start; }
 .meta-logo { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
-.meta-link { color: #e8a500; text-decoration: none; }
+.meta-link { color: #00C805; text-decoration: none; }
 .meta-link:hover { text-decoration: underline; }
 .status-box {
-  font-size: 12px; color: #ccc; background: #181818; border: 1px solid #2d2d2d;
+  font-size: 12px; color: #8E8E93; background: #1C1C1E; border: 1px solid #2C2C2E;
   border-radius: 8px; padding: 12px 14px; line-height: 1.6;
 }
-.status-box a { color: #e8a500; text-decoration: none; }
+.status-box a { color: #00C805; text-decoration: none; }
 .status-box a:hover { text-decoration: underline; }
-.status-error { border-color: rgba(248,113,113,0.35); color: #f87171; }
-.status-success { border-color: rgba(74,222,128,0.35); color: #4ade80; }
+.status-error { border-color: rgba(255,80,0,0.35); color: #FF5000; }
+.status-success { border-color: rgba(0,200,5,0.35); color: #00C805; }
 .edit-field { margin-bottom: 10px; }
 .edit-field .slabel { margin-bottom: 4px; }
 .edit-input {
-  width: 100%; background: #0d0d0d; border: 1px solid #2d2d2d; border-radius: 6px;
-  padding: 8px 10px; font-size: 13px; color: #f0f0f0; font-family: inherit;
+  width: 100%; background: #000000; border: 1px solid #2C2C2E; border-radius: 6px;
+  padding: 8px 10px; font-size: 13px; color: #FFFFFF; font-family: inherit;
 }
-.edit-input:focus { outline: none; border-color: #e8a500; }
+.edit-input:focus { outline: none; border-color: #00C805; }
 
 /* Supply bar */
-.bar-track { height: 7px; background: rgba(232,165,0,0.08); border: 1px solid rgba(232,165,0,0.12); border-radius: 4px; overflow: hidden; }
-.bar-fill  { height: 100%; background: linear-gradient(90deg, #9a6d00, #e8a500); border-radius: 4px; transition: width .6s; }
+.bar-track { height: 7px; background: rgba(0,200,5,0.08); border: 1px solid rgba(0,200,5,0.12); border-radius: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; background: linear-gradient(90deg, #007A03, #00C805); border-radius: 4px; transition: width .6s; }
 .legend-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 11px; margin-top: 7px; }
 .leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-.leg-circ { background: #e8a500; }
-.leg-lock { background: rgba(232,165,0,0.12); border: 1px solid rgba(232,165,0,0.35); }
-.leg-val { color: #c0c0c0; font-weight: 500; margin-right: 6px; }
+.leg-circ { background: #00C805; }
+.leg-lock { background: rgba(0,200,5,0.12); border: 1px solid rgba(0,200,5,0.35); }
+.leg-val { color: #8E8E93; font-weight: 500; margin-right: 6px; }
 
 /* ── Tabs ────────────────────────────────────────────────────────────────────── */
 .tab-card { padding: 0; }
 .tab-bar {
   display: flex; gap: 0;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid #2C2C2E;
   padding: 0 24px;
   overflow-x: auto;
 }
 .tab-btn {
   background: none; border: none; cursor: pointer;
   padding: 14px 18px;
-  font-size: 13px; font-weight: 500; color: #555;
+  font-size: 13px; font-weight: 500; color: #8E8E93;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   white-space: nowrap;
   transition: color .15s, border-color .15s;
 }
-.tab-btn:hover { color: #f0f0f0; }
-.tab-active { color: #e8a500 !important; border-bottom-color: #e8a500 !important; }
+.tab-btn:hover { color: #FFFFFF; }
+.tab-active { color: #00C805 !important; border-bottom-color: #00C805 !important; }
 .tab-count {
   display: inline-block; margin-left: 5px;
   font-size: 10px; font-weight: 600;
-  background: #1e1e1e; color: #666;
+  background: #2C2C2E; color: #8E8E93;
   border-radius: 10px; padding: 1px 6px;
 }
 
@@ -1122,23 +1122,23 @@ onUnmounted(() => {
   grid-template-columns: 120px 80px 100px 130px 130px 1fr 20px;
   gap: 8px; align-items: center; padding: 7px 0;
 }
-.tx-head { border-bottom: 1px solid #1e1e1e; padding-bottom: 6px; }
-.tx-head > span { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
-.tx-row  { border-bottom: 1px solid #111; }
+.tx-head { border-bottom: 1px solid #2C2C2E; padding-bottom: 6px; }
+.tx-head > span { font-size: 10px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.06em; }
+.tx-row  { border-bottom: 1px solid #2C2C2E; }
 .tx-row:last-child { border-bottom: none; }
 .tx-row:hover { background: rgba(255,255,255,0.02); border-radius: 4px; }
 .tx-hash-wrap { overflow: hidden; }
-.hash-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #e8a500; text-decoration: none; }
+.hash-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #00C805; text-decoration: none; }
 .hash-link:hover { text-decoration: underline; }
-.age  { font-size: 12px; color: #555; white-space: nowrap; }
+.age  { font-size: 12px; color: #8E8E93; white-space: nowrap; }
 .pill { font-size: 10px; font-weight: 600; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
 .addr-cell { overflow: hidden; display: flex; align-items: center; }
-.addr-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #888; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.addr-link:hover { color: #e8a500; }
-.amount-cell { font-family: 'SF Mono', monospace; font-size: 12px; color: #d0d0d0; white-space: nowrap; }
-.muted { color: #444; }
-.chart-stat-val { color: #d0d0d0; }
-.h-balance { font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; }
+.addr-link { font-family: 'SF Mono', monospace; font-size: 12px; color: #8E8E93; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addr-link:hover { color: #00C805; }
+.amount-cell { font-family: 'SF Mono', monospace; font-size: 12px; color: #FFFFFF; white-space: nowrap; }
+.muted { color: #8E8E93; }
+.chart-stat-val { color: #FFFFFF; }
+.h-balance { font-family: 'SF Mono', monospace; font-size: 13px; color: #FFFFFF; }
 
 /* ── Holders table ───────────────────────────────────────────────────────────── */
 .h-head, .h-row {
@@ -1146,21 +1146,21 @@ onUnmounted(() => {
   grid-template-columns: 48px 1fr 180px 100px;
   gap: 10px; align-items: center; padding: 8px 0;
 }
-.h-head { border-bottom: 1px solid #1e1e1e; padding-bottom: 6px; }
-.h-head > span { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
-.h-row { border-bottom: 1px solid #111; }
+.h-head { border-bottom: 1px solid #2C2C2E; padding-bottom: 6px; }
+.h-head > span { font-size: 10px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.06em; }
+.h-row { border-bottom: 1px solid #2C2C2E; }
 .h-row:last-child { border-bottom: none; }
 .h-row:hover { background: rgba(255,255,255,0.02); border-radius: 4px; }
 
 /* ── Pagination ──────────────────────────────────────────────────────────────── */
-.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding-top: 16px; border-top: 1px solid #1a1a1a; margin-top: 8px; }
-.page-btn { background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 6px; padding: 6px 14px; font-size: 12px; color: #888; cursor: pointer; transition: border-color .15s, color .15s; }
-.page-btn:hover:not(:disabled) { border-color: #e8a500; color: #e8a500; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding-top: 16px; border-top: 1px solid #2C2C2E; margin-top: 8px; }
+.page-btn { background: #2C2C2E; border: 1px solid #2C2C2E; border-radius: 6px; padding: 6px 14px; font-size: 12px; color: #8E8E93; cursor: pointer; transition: border-color .15s, color .15s; }
+.page-btn:hover:not(:disabled) { border-color: #00C805; color: #00C805; }
 .page-btn:disabled { opacity: 0.4; cursor: default; }
-.page-info { font-size: 12px; color: #555; }
+.page-info { font-size: 12px; color: #8E8E93; }
 
 /* ── Empty state ─────────────────────────────────────────────────────────────── */
-.empty { padding: 32px; text-align: center; color: #444; font-size: 13px; }
+.empty { padding: 32px; text-align: center; color: #8E8E93; font-size: 13px; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
@@ -1180,7 +1180,7 @@ onUnmounted(() => {
 .pg.theme-light .navbar { background: rgba(255,255,255,0.97); border-bottom-color: #e0e0e0; }
 .pg.theme-light .brand-name { color: #111111; }
 .pg.theme-light .token-header {
-  background: radial-gradient(ellipse 70% 80% at 50% -20%, rgba(232,165,0,0.08) 0%, transparent 60%), #f5f7fa;
+  background: radial-gradient(ellipse 70% 80% at 50% -20%, rgba(0,200,5,0.08) 0%, transparent 60%), #f5f7fa;
   border-bottom-color: #e0e0e0;
 }
 .pg.theme-light .tok-name { color: #111111; }

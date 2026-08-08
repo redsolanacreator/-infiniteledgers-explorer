@@ -10,9 +10,9 @@ const query   = ref('')
 const focused = ref(false)
 
 const isLight = computed(() => base.theme === 'light')
-const bg      = computed(() => isLight.value ? '#ffffff' : '#1a1a1a')
-const bdColor = computed(() => focused.value ? '#e8a500' : (isLight.value ? '#d0d0d0' : '#2d2d2d'))
-const txtColor = computed(() => isLight.value ? '#111111' : '#f0f0f0')
+const bg      = computed(() => isLight.value ? '#ffffff' : '#1C1C1E')
+const bdColor = computed(() => focused.value ? '#00C805' : (isLight.value ? '#d0d0d0' : '#2C2C2E'))
+const txtColor = computed(() => isLight.value ? '#111111' : '#FFFFFF')
 
 function handleSearch() {
   const q = query.value.trim()
@@ -63,10 +63,10 @@ function handleSearch() {
   font-family: 'SF Mono', 'Fira Code', monospace;
   transition: border-color 0.15s, background 0.15s;
 }
-.sb-input::placeholder { color: #888; }
+.sb-input::placeholder { color: #8E8E93; }
 .sb-btn {
   position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; color: #888;
+  background: none; border: none; cursor: pointer; color: #8E8E93;
   padding: 0; display: flex; align-items: center;
 }
 </style>

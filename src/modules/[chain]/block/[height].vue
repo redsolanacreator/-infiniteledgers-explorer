@@ -15,14 +15,14 @@ const format = useFormatter();
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const isLight  = computed(() => store.theme === 'light')
-const t0       = computed(() => isLight.value ? '#111111' : '#f0f0f0')
-const t1       = computed(() => isLight.value ? '#444444' : '#d0d0d0')
-const cardBg   = computed(() => isLight.value ? '#ffffff' : '#141414')
-const cardBd   = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
-const inputBg  = computed(() => isLight.value ? '#f5f5f5' : '#1a1a1a')
-const inputBd  = computed(() => isLight.value ? '#e0e0e0' : '#2d2d2d')
+const t0       = computed(() => isLight.value ? '#111111' : '#FFFFFF')
+const t1       = computed(() => isLight.value ? '#444444' : '#8E8E93')
+const cardBg   = computed(() => isLight.value ? '#ffffff' : '#1C1C1E')
+const cardBd   = computed(() => isLight.value ? '#e0e0e0' : '#2C2C2E')
+const inputBg  = computed(() => isLight.value ? '#f5f5f5' : '#2C2C2E')
+const inputBd  = computed(() => isLight.value ? '#e0e0e0' : '#2C2C2E')
 const rowAlt   = computed(() => isLight.value ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.18)')
-const rowBd    = computed(() => isLight.value ? '#f0f0f0' : '#1a1a1a')
+const rowBd    = computed(() => isLight.value ? '#f0f0f0' : '#2C2C2E')
 const current = ref({} as Block);
 const target = ref(Number(props.height || 0));
 const loading = ref(true);
@@ -93,7 +93,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
   <div class="inf-detail" :class="{ 'inf-light': isLight }">
 
     <!-- ── Loading ──────────────────────────────────────────────────────── -->
-    <div v-if="loading" style="display:flex;align-items:center;justify-content:center;padding:80px;color:#555;font-size:14px;">
+    <div v-if="loading" style="display:flex;align-items:center;justify-content:center;padding:80px;color:#8E8E93;font-size:14px;">
       Loading block #{{ target.toLocaleString() }}…
     </div>
 
@@ -101,12 +101,12 @@ onBeforeRouteUpdate(async (to, from, next) => {
     <div v-else-if="isFutureBlock">
       <div v-if="remainingBlocks > 0">
         <div class="inf-card" style="text-align:center;padding:48px 24px;">
-          <div style="font-size:32px;font-weight:700;color:#e8a500;margin-bottom:12px;">
+          <div style="font-size:32px;font-weight:700;color:#00C805;margin-bottom:12px;">
             Block #{{ target.toLocaleString() }}
           </div>
-          <div style="font-size:13px;color:#666;margin-bottom:28px;">This block has not been produced yet</div>
+          <div style="font-size:13px;color:#8E8E93;margin-bottom:28px;">This block has not been produced yet</div>
           <Countdown :time="estimateTime" css="md:!text-5xl font-sans md:mx-5" />
-          <div style="font-size:13px;color:#888;margin-top:20px;">
+          <div style="font-size:13px;color:#8E8E93;margin-top:20px;">
             Estimated arrival:
             <span :style="{ color: t0, fontWeight: '600', marginLeft: '6px' }">{{ format.toLocaleDate(estimateDate) }}</span>
           </div>
@@ -117,7 +117,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
             <tbody>
               <tr @click="edit = !edit" style="cursor:pointer;">
                 <td class="label-cell">Target Block</td>
-                <td style="color:#e8a500;font-family:monospace;">{{ target.toLocaleString() }}</td>
+                <td style="color:#00C805;font-family:monospace;">{{ target.toLocaleString() }}</td>
               </tr>
               <tr v-if="edit">
                 <td colspan="2" style="padding:16px 20px;text-align:center;">
@@ -127,7 +127,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
                       :style="{ background: inputBg, border: `1px solid ${inputBd}`, borderRadius: '6px', padding: '8px 12px', color: t0, fontSize: '13px', outline: 'none', width: '160px' }"
                     />
                     <button @click="updateTarget()"
-                      style="background:#e8a500;color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+                      style="background:#00C805;color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
                       Go
                     </button>
                   </div>
@@ -163,7 +163,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
               class="inf-nav-btn"
               title="Previous block"
             >←</RouterLink>
-            <h1 style="font-size:26px;font-weight:700;color:#e8a500;font-variant-numeric:tabular-nums;margin:0;">
+            <h1 style="font-size:26px;font-weight:700;color:#00C805;font-variant-numeric:tabular-nums;margin:0;">
               Block #{{ height.toLocaleString() }}
             </h1>
             <RouterLink
@@ -174,14 +174,14 @@ onBeforeRouteUpdate(async (to, from, next) => {
           </div>
           <div style="text-align:right;">
             <div :style="{ fontSize: '13px', color: t1 }">{{ format.toLocaleDate(current.block?.header?.time) }}</div>
-            <div style="font-size:12px;color:#555;margin-top:3px;">{{ format.toDay(current.block?.header?.time, 'from') }}</div>
+            <div style="font-size:12px;color:#8E8E93;margin-top:3px;">{{ format.toDay(current.block?.header?.time, 'from') }}</div>
           </div>
         </div>
         <!-- Block hash -->
         <div v-if="current.block_id?.hash"
-          style="margin-top:14px;padding-top:14px;border-top:1px solid #1e1e1e;display:flex;align-items:flex-start;gap:10px;">
-          <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:0.06em;padding-top:2px;flex-shrink:0;">Hash</span>
-          <span style="font-size:12px;color:#666;font-family:'SF Mono',monospace;word-break:break-all;">{{ current.block_id.hash }}</span>
+          style="margin-top:14px;padding-top:14px;border-top:1px solid #2C2C2E;display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:10px;color:#8E8E93;text-transform:uppercase;letter-spacing:0.06em;padding-top:2px;flex-shrink:0;">Hash</span>
+          <span style="font-size:12px;color:#8E8E93;font-family:'SF Mono',monospace;word-break:break-all;">{{ current.block_id.hash }}</span>
         </div>
       </div>
 
@@ -196,7 +196,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
             <tr>
               <td class="label-cell">Proposer</td>
               <td>
-                <span style="color:#e8a500;font-family:'SF Mono',monospace;font-size:13px;">
+                <span style="color:#00C805;font-family:'SF Mono',monospace;font-size:13px;">
                   {{ format.validator(current.block?.header?.proposer_address) || current.block?.header?.proposer_address || '—' }}
                 </span>
               </td>
@@ -204,20 +204,20 @@ onBeforeRouteUpdate(async (to, from, next) => {
             <tr>
               <td class="label-cell">Transactions</td>
               <td>
-                <span :style="`color:${(current.block?.data?.txs?.length || 0) > 0 ? '#4ade80' : '#888'};font-family:monospace;`">
+                <span :style="`color:${(current.block?.data?.txs?.length || 0) > 0 ? '#00C805' : '#8E8E93'};font-family:monospace;`">
                   {{ current.block?.data?.txs?.length || 0 }}
                 </span>
               </td>
             </tr>
             <tr>
               <td class="label-cell">App Hash</td>
-              <td style="font-family:'SF Mono',monospace;font-size:12px;color:#555;word-break:break-all;">
+              <td style="font-family:'SF Mono',monospace;font-size:12px;color:#8E8E93;word-break:break-all;">
                 {{ current.block?.header?.app_hash || '—' }}
               </td>
             </tr>
             <tr>
               <td class="label-cell">Validators Hash</td>
-              <td style="font-family:'SF Mono',monospace;font-size:12px;color:#555;word-break:break-all;">
+              <td style="font-family:'SF Mono',monospace;font-size:12px;color:#8E8E93;word-break:break-all;">
                 {{ current.block?.header?.validators_hash || '—' }}
               </td>
             </tr>
@@ -229,7 +229,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
       <div class="inf-card">
         <h3 class="inf-section-title" style="margin-bottom:14px;">
           Transactions
-          <span style="font-weight:400;color:#444;margin-left:8px;">({{ current.block?.data?.txs?.length || 0 }})</span>
+          <span style="font-weight:400;color:#8E8E93;margin-left:8px;">({{ current.block?.data?.txs?.length || 0 }})</span>
         </h3>
         <TxsElement :value="current.block?.data?.txs" />
       </div>
@@ -267,7 +267,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
 .label-cell {
   width: 160px !important;
   font-size: 12px !important;
-  color: #888 !important;
+  color: #8E8E93 !important;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -276,13 +276,13 @@ onBeforeRouteUpdate(async (to, from, next) => {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
   background: v-bind(inputBg); border: 1px solid v-bind(inputBd); border-radius: 6px;
-  color: #e8a500; text-decoration: none; font-size: 16px; font-weight: 600;
+  color: #00C805; text-decoration: none; font-size: 16px; font-weight: 600;
   transition: border-color 0.15s, background 0.15s;
 }
-.inf-nav-btn:hover { border-color: #e8a500; background: rgba(232,165,0,0.08); }
+.inf-nav-btn:hover { border-color: #00C805; background: rgba(0,200,5,0.08); }
 
 .inf-section-title {
-  font-size: 12px; font-weight: 600; color: #888;
+  font-size: 12px; font-weight: 600; color: #8E8E93;
   text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
 }
 
@@ -297,7 +297,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
 :deep(.table thead th) {
   padding: 8px 12px !important;
   font-size: 10px !important; font-weight: 500 !important;
-  color: #888 !important; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #8E8E93 !important; text-transform: uppercase; letter-spacing: 0.06em;
   background: v-bind(inputBg) !important; border: none !important; border-bottom: 1px solid v-bind(cardBd) !important;
 }
 :deep(.table tbody tr) { border-bottom: 1px solid v-bind(rowBd) !important; background: transparent !important; }
@@ -307,8 +307,8 @@ onBeforeRouteUpdate(async (to, from, next) => {
   color: v-bind(t1) !important; background: transparent !important;
   border: none !important; font-family: 'SF Mono', monospace;
 }
-:deep(.text-primary) { color: #e8a500 !important; }
+:deep(.text-primary) { color: #00C805 !important; }
 :deep(.dark\:invert) { filter: none !important; }
-:deep(.text-center) { color: #555; font-size: 13px; padding: 20px; }
+:deep(.text-center) { color: #8E8E93; font-size: 13px; padding: 20px; }
 :deep(.overflow-x-auto) { overflow-x: auto; }
 </style>

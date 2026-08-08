@@ -38,8 +38,8 @@ const isLight = computed(() => baseStore.theme === 'light')
 
 <style scoped>
 .app-footer {
-  background: #0d0d0d;
-  border-top: 1px solid #1e1e1e;
+  background: #000000;
+  border-top: 1px solid #2C2C2E;
   padding: 20px 24px 18px;
   margin-top: 8px;
 }
@@ -59,13 +59,13 @@ const isLight = computed(() => baseStore.theme === 'light')
   text-decoration: none;
 }
 .af-logo { width: 20px; height: 20px; border-radius: 50%; }
-.af-name { font-size: 14px; font-weight: 700; color: #f0f0f0; letter-spacing: -0.02em; }
-.af-chain-id { font-size: 11px; color: #555; font-family: 'SF Mono', monospace; margin-top: -4px; }
-.af-desc { font-size: 12px; color: #666; max-width: 520px; line-height: 1.5; margin: 4px 0 2px; }
+.af-name { font-size: 14px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; }
+.af-chain-id { font-size: 11px; color: #8E8E93; font-family: 'SF Mono', monospace; margin-top: -4px; }
+.af-desc { font-size: 12px; color: #8E8E93; max-width: 520px; line-height: 1.5; margin: 4px 0 2px; }
 .af-nav { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
-.af-link { font-size: 12px; color: #888; text-decoration: none; transition: color .15s; }
-.af-link:hover { color: #e8a500; }
-.af-copyright { font-size: 11px; color: #444; margin-top: 6px; }
+.af-link { font-size: 12px; color: #8E8E93; text-decoration: none; transition: color .15s; }
+.af-link:hover { color: #00C805; }
+.af-copyright { font-size: 11px; color: #8E8E93; margin-top: 6px; }
 
 /* Light theme */
 .app-footer.theme-light { background: #f5f7fa; border-top-color: #e0e0e0; }
@@ -73,6 +73,6 @@ const isLight = computed(() => baseStore.theme === 'light')
 .app-footer.theme-light .af-chain-id { color: #888; }
 .app-footer.theme-light .af-desc { color: #777; }
 .app-footer.theme-light .af-link { color: #666; }
-.app-footer.theme-light .af-link:hover { color: #e8a500; }
+.app-footer.theme-light .af-link:hover { color: #00C805; }
 .app-footer.theme-light .af-copyright { color: #999; }
 </style>
