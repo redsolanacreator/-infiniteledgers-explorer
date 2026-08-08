@@ -13,7 +13,7 @@ export const KNOWN_ASSETS: Record<string, KnownAsset> = {
     symbol: 'INF',
     name: 'Infinite Ledgers',
     decimals: 6,
-    logo: '/logos/infiniteledgers.svg',
+    logo: '/logos/infiniteledgers.png',
     vestingAddr: 'inf14h3h0n645e0zln9gn004un47mdn9yfg0nswtyv',
     maxSupply: '400,000,000',
     vestingNote: 'Locked = founder vesting · linear release Aug 2026 → 2046',

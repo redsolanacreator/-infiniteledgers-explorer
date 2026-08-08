@@ -13,7 +13,7 @@ const isLight = computed(() => baseStore.theme === 'light')
   <footer class="app-footer" :class="{ 'theme-light': isLight }">
     <div class="af-inner">
       <RouterLink to="/" class="af-brand">
-        <img src="/logos/infiniteledgers.svg" alt="INF" class="af-logo" />
+        <img src="/logos/infiniteledgers.png" alt="INF" class="af-logo" />
         <span class="af-name">Infinite Ledgers</span>
       </RouterLink>
       <span class="af-chain-id">{{ CHAIN_ID }}</span>

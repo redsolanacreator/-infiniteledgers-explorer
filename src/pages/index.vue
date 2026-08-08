@@ -355,7 +355,7 @@ onUnmounted(() => {
     <nav class="navbar">
       <div class="nav-inner">
         <a href="/" class="brand">
-          <img src="/logos/infiniteledgers.svg" alt="INF" class="brand-logo" />
+          <img src="/logos/infiniteledgers.png" alt="INF" class="brand-logo" />
           <span class="brand-name">Infinite Ledgers</span>
         </a>
         <div class="nav-right">
@@ -399,7 +399,7 @@ onUnmounted(() => {
         <!-- Token / supply card -->
         <div class="card">
           <RouterLink to="/token/minf" class="chead chead-link">
-            <img src="/logos/infiniteledgers.svg" alt="INF" style="width:22px;height:22px;border-radius:50%;margin-right:8px;" />
+            <img src="/logos/infiniteledgers.png" alt="INF" style="width:22px;height:22px;border-radius:50%;margin-right:8px;" />
             <span class="ctitle">INF Token</span>
             <span class="badge-native">Native</span>
           </RouterLink>

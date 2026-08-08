@@ -286,7 +286,7 @@ const show_ad = computed(() => {
         </div>
 
         <RouterLink to="/" title="Home" class="flex items-center mr-3 shrink-0">
-          <img src="/logos/infiniteledgers.svg" class="w-7 h-7 rounded-full" />
+          <img src="/logos/infiniteledgers.png" class="w-7 h-7 rounded-full" />
           <span class="hidden sm:!inline-block ml-2 text-sm font-medium text-gray-600 dark:text-gray-200 whitespace-nowrap">
             Home
           </span>

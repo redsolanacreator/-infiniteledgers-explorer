@@ -500,7 +500,7 @@ onUnmounted(() => {
     <nav class="navbar">
       <div class="nav-inner">
         <a href="/" class="brand">
-          <img src="/logos/infiniteledgers.svg" alt="INF" class="brand-logo" />
+          <img src="/logos/infiniteledgers.png" alt="INF" class="brand-logo" />
           <span class="brand-name">Infinite Ledgers</span>
         </a>
         <div class="search-wrap">
