@@ -9,6 +9,8 @@ import InfSearchBar from '@/components/inf/SearchBar.vue'
 import ThemeToggle from '@/components/inf/ThemeToggle.vue'
 import AppFooter from '@/components/inf/AppFooter.vue'
 import { useBaseStore } from '@/stores'
+import { fetchPool } from '@/config/ammContract'
+import { fetchAtomUsdPrice } from '@/config/coingecko'
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
 const baseStore = useBaseStore()
@@ -20,9 +22,15 @@ const CHAIN = 'infiniteledgers'
 const DENOM = 'minf'
 const BLOCKS_PER_ERA    = 25_246_080
 const ERA_0_REWARD_MINF = 1_980_000   // minf per block in era 0
+const TOTAL_SUPPLY_INF  = 400_000_000 // fixed max supply, for FDV
 
 // Founder vesting account — ContinuousVestingAccount found on-chain at genesis
 const VESTING_ADDR = 'inf14h3h0n645e0zln9gn004un47mdn9yfg0nswtyv'
+
+// ATOM's IBC denom on this chain (transfer/channel-0/uatom), confirmed via
+// denoms_metadata -- used to find the minf/ATOM pool for the derived price
+const ATOM_IBC_DENOM = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+const LOW_LIQUIDITY_ATOM = 10 // below this much ATOM in the pool, flag it as thin
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const connected    = ref(false)
@@ -47,6 +55,11 @@ const jailedCount      = ref(0)
 const allDenoms    = ref<{ denom: string; amount: string }[]>([])
 const totalTxCount = ref<number | null>(null)
 
+// minf/ATOM pool reserves (raw minimal units) + ATOM/USD, for derived INF price
+const poolAtomReserve = ref<bigint | null>(null)
+const poolInfReserve  = ref<bigint | null>(null)
+const atomUsdPrice    = ref<number | null>(null)
+
 interface RBlock { height: string; time: string; proposer: string; numTxs: number }
 interface RTx    { hash: string; height: string; time: string; msgType: string; success: boolean }
 const recentBlocks = ref<RBlock[]>([])
@@ -64,6 +77,19 @@ const circulatingPct = computed(() => {
   if (totalSupplyMinf.value === 0n) return 100
   return Number(circulatingMinf.value * 10000n / totalSupplyMinf.value) / 100
 })
+
+// INF/USD = (ATOM reserve / INF reserve, decimal-adjusted) × ATOM/USD.
+// Both denoms are 6 decimals so the raw-unit ratio equals the display-unit ratio.
+const infPriceUsd = computed(() => {
+  if (!poolAtomReserve.value || !poolInfReserve.value || atomUsdPrice.value == null) return null
+  const infInAtom = Number(poolAtomReserve.value) / Number(poolInfReserve.value)
+  return infInAtom * atomUsdPrice.value
+})
+
+const fdvUsd = computed(() => (infPriceUsd.value != null ? infPriceUsd.value * TOTAL_SUPPLY_INF : null))
+
+const poolAtomDepth  = computed(() => (poolAtomReserve.value != null ? Number(poolAtomReserve.value) / 1e6 : null))
+const isLowLiquidity = computed(() => poolAtomDepth.value != null && poolAtomDepth.value < LOW_LIQUIDITY_ATOM)
 
 const nonCircPct = computed(() => +(100 - circulatingPct.value).toFixed(2))
 
@@ -115,6 +141,16 @@ function fmtRewardINF(minf: number): string {
   const frac  = minf % 1_000_000
   if (frac === 0) return whole.toLocaleString()
   return `${whole.toLocaleString()}.${frac.toString().padStart(6, '0').replace(/0+$/, '')}`
+}
+
+// Sub-cent prices need more decimals to not just show "$0.00"
+function fmtUsdPrice(n: number): string {
+  const decimals = n >= 1 ? 2 : n >= 0.01 ? 4 : 6
+  return `$${n.toFixed(decimals)}`
+}
+
+function fmtUsdCompact(n: number): string {
+  return `$${Math.round(n).toLocaleString()}`
 }
 
 function relTime(iso: string): string {
@@ -238,6 +274,25 @@ async function fetchRecentBlocks() {
   } catch {}
 }
 
+async function fetchInfPrice() {
+  const [pool, atomUsd] = await Promise.all([
+    fetchPool(ATOM_IBC_DENOM, 'minf'),
+    fetchAtomUsdPrice(),
+  ])
+  if (pool) {
+    // match by denom rather than a/b position -- the contract's ordering
+    // convention isn't part of its documented contract
+    if (pool.denomB === 'minf') {
+      poolAtomReserve.value = pool.reserveA
+      poolInfReserve.value  = pool.reserveB
+    } else if (pool.denomA === 'minf') {
+      poolAtomReserve.value = pool.reserveB
+      poolInfReserve.value  = pool.reserveA
+    }
+  }
+  if (atomUsd != null) atomUsdPrice.value = atomUsd
+}
+
 async function fetchRecentTxs() {
   try {
     const q = encodeURIComponent('tx.height>=1')
@@ -265,7 +320,7 @@ let vestingTimer: ReturnType<typeof setInterval>
 
 onMounted(async () => {
   await fetchStatus()
-  await Promise.all([fetchSupply(), fetchVesting(), fetchValidators(), fetchRecentBlocks(), fetchRecentTxs()])
+  await Promise.all([fetchSupply(), fetchVesting(), fetchValidators(), fetchRecentBlocks(), fetchRecentTxs(), fetchInfPrice()])
 
   fastTimer = setInterval(async () => {
     await fetchStatus()
@@ -273,7 +328,7 @@ onMounted(async () => {
   }, 5000)
 
   slowTimer = setInterval(async () => {
-    await Promise.all([fetchSupply(), fetchVesting(), fetchValidators()])
+    await Promise.all([fetchSupply(), fetchVesting(), fetchValidators(), fetchInfPrice()])
   }, 30000)
 
   // recompute unvested every minute (changes linearly over decades, but stay accurate)
@@ -349,11 +404,15 @@ onUnmounted(() => {
             <span class="badge-native">Native</span>
           </RouterLink>
 
-          <!-- Price — no market exists, shown honestly -->
+          <!-- Price — derived from the minf/ATOM AMM pool × ATOM/USD, shown honestly -->
           <div class="mkt-row">
             <div>
               <div class="slabel">Price</div>
-              <div class="no-data">No market data</div>
+              <div v-if="infPriceUsd != null" class="mkt-price">{{ fmtUsdPrice(infPriceUsd) }}</div>
+              <div v-else class="no-data">No market data</div>
+              <div v-if="isLowLiquidity" class="liq-warn">
+                ⚠ Low liquidity ({{ poolAtomDepth?.toFixed(2) }} ATOM pool)
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
@@ -398,7 +457,8 @@ onUnmounted(() => {
             </div>
             <div>
               <div class="slabel">FDV</div>
-              <div class="no-data-sm">—</div>
+              <div v-if="fdvUsd != null" class="mkt-fdv">{{ fmtUsdCompact(fdvUsd) }}</div>
+              <div v-else class="no-data-sm">—</div>
             </div>
           </div>
 
@@ -703,6 +763,9 @@ onUnmounted(() => {
 .sval-link:hover { text-decoration: underline; }
 .no-data    { font-size: 15px; color: #555; font-style: italic; }
 .no-data-sm { font-size: 13px; color: #555; font-style: italic; }
+.mkt-price  { font-size: 20px; font-weight: 700; color: #f0f0f0; }
+.mkt-fdv    { font-size: 15px; font-weight: 600; color: #f0f0f0; }
+.liq-warn   { font-size: 11px; color: #e8a500; margin-top: 3px; }
 
 /* Market row */
 .mkt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
@@ -807,6 +870,8 @@ onUnmounted(() => {
 .pg.theme-light .sval { color: #111111; }
 .pg.theme-light .no-data,
 .pg.theme-light .no-data-sm { color: #aaa; font-style: italic; }
+.pg.theme-light .mkt-price,
+.pg.theme-light .mkt-fdv { color: #111111; }
 .pg.theme-light .supply-total { color: #111111; }
 .pg.theme-light .leg-val { color: #444; }
 .pg.theme-light .era-labels { color: #999; }

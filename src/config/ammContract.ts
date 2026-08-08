@@ -51,3 +51,38 @@ export async function fetchImpliedInfPrice(otherDenom: string, otherDecimals: nu
   if (raw == null) return null
   return raw * 10 ** (6 - otherDecimals)
 }
+
+export interface PoolReserves {
+  denomA: string
+  denomB: string
+  reserveA: bigint // raw minimal units of denomA
+  reserveB: bigint // raw minimal units of denomB
+}
+
+/**
+ * Raw reserves of a pool, in minimal units, as reported by the contract's
+ * own get_pool query -- not derived from spot_price. The contract returns
+ * denom_a/denom_b in its own internal ordering regardless of the order
+ * queried in, so callers must match against the returned denoms rather
+ * than assuming a/b position. Returns null if the pool doesn't exist.
+ */
+export async function fetchPool(denomA: string, denomB: string): Promise<PoolReserves | null> {
+  try {
+    const query = { get_pool: { denom_a: denomA, denom_b: denomB } }
+    const encoded = btoa(JSON.stringify(query))
+    const url = `${REST}/cosmwasm/wasm/v1/contract/${AMM_CONTRACT_ADDRESS}/smart/${encoded}`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const body = await res.json()
+    const d = body?.data
+    if (d?.reserve_a == null || d?.reserve_b == null) return null
+    return {
+      denomA: d.denom_a,
+      denomB: d.denom_b,
+      reserveA: BigInt(d.reserve_a),
+      reserveB: BigInt(d.reserve_b),
+    }
+  } catch {
+    return null
+  }
+}
